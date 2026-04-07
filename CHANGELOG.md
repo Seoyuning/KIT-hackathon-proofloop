@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1.1 - 2026-04-07
+
+- Trim Gemini environment values at runtime so Vercel input whitespace does not break live scoring.
+
 ## 0.1.1.0 - 2026-04-07
 
 - Switch the optional live scoring path from OpenAI to Gemini.
