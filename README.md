@@ -96,7 +96,9 @@ The app still works without secrets, which is useful for public judging and safe
 ## Submission support docs
 
 - [Product strategy](./docs/proofloop-design.md)
-- [AI report draft](./docs/AI_REPORT_DRAFT.md)
+- [AI report final draft](./docs/AI_REPORT_DRAFT.md)
+- [90-second demo script](./docs/DEMO_SCRIPT.md)
+- [Submission checklist](./docs/SUBMISSION_CHECKLIST.md)
 
 ## Verification
 
