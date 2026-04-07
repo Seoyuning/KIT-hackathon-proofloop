@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1.3 - 2026-04-07
+
+- Block empty and low-context diagnosis requests on both the client and API route.
+- Prevent duplicate diagnosis submissions while a run is already in flight.
+- Fall back to deterministic narrative lists when Gemini returns empty arrays or blank strings.
+- Replace the misleading initial status message with neutral guidance for beta users.
+
 ## 0.1.1.2 - 2026-04-07
 
 - Keep Gemini for live narrative analysis while preserving deterministic scoring and priority metrics.

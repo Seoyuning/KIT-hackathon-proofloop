@@ -407,12 +407,20 @@ function toScore(value: unknown, fallback: number) {
   return typeof value === "number" && Number.isFinite(value) ? clamp(value, 0, 100) : fallback;
 }
 
+function toNonEmptyString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : fallback;
+}
+
 function toStringList(value: unknown, fallback: string[]) {
   if (!Array.isArray(value)) {
     return fallback;
   }
 
-  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+  const next = value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim());
+
+  return next.length > 0 ? next : fallback;
 }
 
 function toMode(value: unknown): CoachPriority | null {
@@ -437,14 +445,14 @@ export function normalizeDiagnosis(raw: unknown, fallback: DiagnosisResult, mode
 
           return {
             label:
-              typeof row.label === "string"
-                ? row.label
+              typeof row.label === "string" && row.label.trim().length > 0
+                ? row.label.trim()
                 : fallback.evidenceBreakdown[index]?.label ?? `Metric ${index + 1}`,
             score: toScore(row.score, fallback.evidenceBreakdown[index]?.score ?? 50),
-            note:
-              typeof row.note === "string"
-                ? row.note
-                : fallback.evidenceBreakdown[index]?.note ?? "No note available.",
+            note: toNonEmptyString(
+              row.note,
+              fallback.evidenceBreakdown[index]?.note ?? "No note available.",
+            ),
           };
         })
         .slice(0, 4)
@@ -452,26 +460,19 @@ export function normalizeDiagnosis(raw: unknown, fallback: DiagnosisResult, mode
 
   return {
     mode,
-    verdict: typeof value.verdict === "string" ? value.verdict : fallback.verdict,
+    verdict: toNonEmptyString(value.verdict, fallback.verdict),
     evidenceScore: toScore(value.evidenceScore, fallback.evidenceScore),
     coachPriority,
-    strongestSignal:
-      typeof value.strongestSignal === "string" ? value.strongestSignal : fallback.strongestSignal,
-    opportunityWindow:
-      typeof value.opportunityWindow === "string"
-        ? value.opportunityWindow
-        : fallback.opportunityWindow,
+    strongestSignal: toNonEmptyString(value.strongestSignal, fallback.strongestSignal),
+    opportunityWindow: toNonEmptyString(value.opportunityWindow, fallback.opportunityWindow),
     evidenceBreakdown:
       evidenceBreakdown.length === 4 ? evidenceBreakdown : fallback.evidenceBreakdown,
     riskFlags: toStringList(value.riskFlags, fallback.riskFlags).slice(0, 4),
     misconceptions: toStringList(value.misconceptions, fallback.misconceptions).slice(0, 4),
     defenseQuestions: toStringList(value.defenseQuestions, fallback.defenseQuestions).slice(0, 4),
     interventionPlan: toStringList(value.interventionPlan, fallback.interventionPlan).slice(0, 4),
-    studentNudge: typeof value.studentNudge === "string" ? value.studentNudge : fallback.studentNudge,
-    instructorSummary:
-      typeof value.instructorSummary === "string"
-        ? value.instructorSummary
-        : fallback.instructorSummary,
+    studentNudge: toNonEmptyString(value.studentNudge, fallback.studentNudge),
+    instructorSummary: toNonEmptyString(value.instructorSummary, fallback.instructorSummary),
   };
 }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { analyzeWithOptionalGemini } from "@/lib/diagnosis";
+import { getPayloadValidationMessage } from "@/lib/payload-validation";
 import type { DiagnosisPayload } from "@/lib/types";
 
 function isPayload(value: unknown): value is DiagnosisPayload {
@@ -23,6 +24,12 @@ export async function POST(request: Request) {
 
   if (!isPayload(body)) {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+  }
+
+  const validationMessage = getPayloadValidationMessage(body);
+
+  if (validationMessage) {
+    return NextResponse.json({ error: validationMessage }, { status: 400 });
   }
 
   const diagnosis = await analyzeWithOptionalGemini(body);

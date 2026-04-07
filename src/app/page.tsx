@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { heuristicDiagnosis } from "@/lib/diagnosis";
 import { cohortStudents, demoCases, toPayload } from "@/lib/mock-data";
+import { getPayloadValidationMessage } from "@/lib/payload-validation";
 import type { CohortStudent, DiagnosisPayload, DiagnosisResult, EvidenceMetric } from "@/lib/types";
 
 const rubricMap = [
@@ -66,9 +67,11 @@ export default function Home() {
   const [selectedCaseId, setSelectedCaseId] = useState(initialCase.id);
   const [selectedStudentId, setSelectedStudentId] = useState(initialCase.id);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult>(cohortStudents[0].diagnosis);
-  const [statusMessage, setStatusMessage] = useState("Demo AI fallback is active. Add GEMINI_API_KEY to enable live model scoring.");
+  const [statusMessage, setStatusMessage] = useState(
+    "Select a preset or paste student evidence, then run ProofLoop.",
+  );
   const [analysisError, setAnalysisError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cohort = useMemo(() => cohortStudents, []);
   const cohortStats = useMemo(() => buildCohortStats(cohort), [cohort]);
@@ -76,6 +79,7 @@ export default function Home() {
     () => cohort.find((student) => student.id === selectedStudentId) ?? cohort[0],
     [cohort, selectedStudentId],
   );
+  const validationMessage = useMemo(() => getPayloadValidationMessage(payload), [payload]);
 
   function loadPreset(caseId: string) {
     const nextCase = demoCases.find((candidate) => candidate.id === caseId);
@@ -96,8 +100,17 @@ export default function Home() {
   }
 
   async function runDiagnosis() {
+    const nextValidationMessage = getPayloadValidationMessage(payload);
+
+    if (nextValidationMessage) {
+      setAnalysisError(nextValidationMessage);
+      setStatusMessage("Add enough evidence before running the diagnosis.");
+      return;
+    }
+
     setAnalysisError("");
     setStatusMessage("Analyzing learning evidence...");
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/diagnose", {
@@ -108,29 +121,41 @@ export default function Home() {
         body: JSON.stringify(payload),
       });
 
+      const responseBody = (await response.json().catch(() => null)) as
+        | DiagnosisResult
+        | { error?: string }
+        | null;
+
       if (!response.ok) {
-        throw new Error("Diagnosis request failed.");
+        const errorMessage =
+          responseBody &&
+          typeof responseBody === "object" &&
+          "error" in responseBody &&
+          typeof responseBody.error === "string"
+            ? responseBody.error
+            : "Diagnosis request failed.";
+
+        setAnalysisError(errorMessage);
+        setStatusMessage("Add enough evidence before running the diagnosis.");
+        return;
       }
 
-      const nextDiagnosis = (await response.json()) as DiagnosisResult;
+      const nextDiagnosis = responseBody as DiagnosisResult;
 
-      startTransition(() => {
-        setDiagnosis(nextDiagnosis);
-        setStatusMessage(
-          nextDiagnosis.mode === "live_ai"
-            ? "Live AI scoring completed."
-            : "Demo AI scoring completed. Set GEMINI_API_KEY to switch to live scoring.",
-        );
-      });
+      setDiagnosis(nextDiagnosis);
+      setStatusMessage(
+        nextDiagnosis.mode === "live_ai"
+          ? "Live AI scoring completed."
+          : "Demo AI scoring completed. Live model was unavailable, so the built-in evaluator took over.",
+      );
     } catch {
       const fallback = heuristicDiagnosis(payload);
 
-      startTransition(() => {
-        setDiagnosis(fallback);
-        setStatusMessage("Demo AI scoring completed. Live model was unavailable.");
-      });
-
+      setDiagnosis(fallback);
+      setStatusMessage("Demo AI scoring completed. Live model was unavailable.");
       setAnalysisError("Live model connection failed, so the built-in demo evaluator handled this run.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -303,15 +328,18 @@ export default function Home() {
               <div>
                 <p className="text-sm font-medium text-navy">{statusMessage}</p>
                 {analysisError ? <p className="mt-1 text-sm text-red">{analysisError}</p> : null}
+                {!analysisError && validationMessage ? (
+                  <p className="mt-1 text-sm text-muted">{validationMessage}</p>
+                ) : null}
               </div>
 
               <button
                 className="inline-flex items-center justify-center rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={isPending}
+                disabled={isSubmitting || Boolean(validationMessage)}
                 onClick={() => void runDiagnosis()}
                 type="button"
               >
-                {isPending ? "Analyzing..." : "Run ProofLoop"}
+                {isSubmitting ? "Analyzing..." : validationMessage ? "Add more evidence" : "Run ProofLoop"}
               </button>
             </div>
           </div>
