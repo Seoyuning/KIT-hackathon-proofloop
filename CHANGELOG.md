@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1.4 - 2026-04-07
+
+- Add an 8-second timeout on live Gemini analysis so the app falls back quickly during demos instead of hanging.
+- Align `package.json` and `VERSION` so shipped version metadata stays consistent across local, CI, and Vercel logs.
+
 ## 0.1.1.3 - 2026-04-07
 
 - Block empty and low-context diagnosis requests on both the client and API route.
