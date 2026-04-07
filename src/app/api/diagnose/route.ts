@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { analyzeWithOptionalOpenAI } from "@/lib/diagnosis";
+import { analyzeWithOptionalGemini } from "@/lib/diagnosis";
 import type { DiagnosisPayload } from "@/lib/types";
 
 function isPayload(value: unknown): value is DiagnosisPayload {
@@ -25,6 +25,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
 
-  const diagnosis = await analyzeWithOptionalOpenAI(body);
+  const diagnosis = await analyzeWithOptionalGemini(body);
   return NextResponse.json(diagnosis);
 }

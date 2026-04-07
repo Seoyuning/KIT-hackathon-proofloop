@@ -467,51 +467,88 @@ export function normalizeDiagnosis(raw: unknown, fallback: DiagnosisResult, mode
   };
 }
 
-export async function analyzeWithOptionalOpenAI(payload: DiagnosisPayload) {
+function extractGeminiText(data: unknown) {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const value = data as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>;
+      };
+    }>;
+  };
+
+  const parts = value.candidates?.[0]?.content?.parts ?? [];
+  const text = parts
+    .map((part) => (typeof part.text === "string" ? part.text : ""))
+    .join("")
+    .trim();
+
+  return text.length > 0 ? text : null;
+}
+
+export async function analyzeWithOptionalGemini(payload: DiagnosisPayload) {
   const fallback = heuristicDiagnosis(payload, "demo_ai");
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+  const apiKey = process.env.GEMINI_API_KEY;
+  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 
   if (!apiKey) {
     return fallback;
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const prompt = `You are ProofLoop, an educational reasoning auditor.
+
+Return a balanced diagnosis of whether the learner truly understands the work.
+Be specific, practical, and instructor-ready.
+
+Payload:
+${JSON.stringify(payload, null, 2)}`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
-        input: `You are ProofLoop, an educational reasoning auditor.\nReturn a balanced diagnosis of whether the learner truly understands the work.\nBe specific, practical, and instructor-ready.\n\nPayload:\n${JSON.stringify(
-          payload,
-          null,
-          2,
-        )}`,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "proofloop_analysis",
-            strict: true,
-            schema,
+        system_instruction: {
+          parts: [
+            {
+              text: "You analyze AI-assisted student work and produce instructor-ready JSON only.",
+            },
+          ],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
           },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseJsonSchema: schema,
         },
       }),
-    });
+    },
+    );
 
     if (!response.ok) {
       return fallback;
     }
 
-    const data = (await response.json()) as { output_text?: string };
+    const data = (await response.json()) as unknown;
+    const outputText = extractGeminiText(data);
 
-    if (!data.output_text) {
+    if (!outputText) {
       return fallback;
     }
 
-    const parsed = JSON.parse(data.output_text);
+    const parsed = JSON.parse(outputText);
     return normalizeDiagnosis(parsed, fallback, "live_ai");
   } catch {
     return fallback;

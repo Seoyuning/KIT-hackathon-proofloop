@@ -95,7 +95,7 @@ Explain the system design clearly:
 ### MVP runtime
 
 - deterministic heuristic evaluator for reliability in public demos
-- optional live model scoring via OpenAI Responses API when an API key is configured
+- optional live model scoring via the Gemini API when an API key is configured
 
 ### Why this split is smart
 

@@ -66,7 +66,7 @@ export default function Home() {
   const [selectedCaseId, setSelectedCaseId] = useState(initialCase.id);
   const [selectedStudentId, setSelectedStudentId] = useState(initialCase.id);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult>(cohortStudents[0].diagnosis);
-  const [statusMessage, setStatusMessage] = useState("Demo AI fallback is active. Add OPENAI_API_KEY to enable live model scoring.");
+  const [statusMessage, setStatusMessage] = useState("Demo AI fallback is active. Add GEMINI_API_KEY to enable live model scoring.");
   const [analysisError, setAnalysisError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -119,7 +119,7 @@ export default function Home() {
         setStatusMessage(
           nextDiagnosis.mode === "live_ai"
             ? "Live AI scoring completed."
-            : "Demo AI scoring completed. Set OPENAI_API_KEY to switch to live scoring.",
+            : "Demo AI scoring completed. Set GEMINI_API_KEY to switch to live scoring.",
         );
       });
     } catch {

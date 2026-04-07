@@ -53,7 +53,7 @@ Review a cohort sorted by intervention priority rather than by raw completion st
 The MVP includes two execution modes:
 
 - `Demo AI` fallback: deterministic evaluator that always works in public demos and without secrets
-- `Live AI` mode: optional runtime scoring through the OpenAI Responses API when `OPENAI_API_KEY` is configured
+- `Live AI` mode: optional runtime scoring through the Gemini API when `GEMINI_API_KEY` is configured
 
 ## Tech stack
 
@@ -61,7 +61,7 @@ The MVP includes two execution modes:
 - React 19
 - TypeScript
 - Tailwind CSS 4
-- Optional OpenAI runtime integration via `src/app/api/diagnose/route.ts`
+- Optional Gemini runtime integration via `src/app/api/diagnose/route.ts`
 
 ## Local run
 
@@ -77,8 +77,8 @@ Open `http://localhost:3000`.
 Copy `.env.example` to `.env.local` if you want live model scoring:
 
 ```bash
-OPENAI_API_KEY=...
-OPENAI_MODEL=gpt-4.1-mini
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 If the API key is missing or the model call fails, the app automatically falls back to the built-in demo evaluator.
@@ -88,7 +88,7 @@ If the API key is missing or the model call fails, the app automatically falls b
 The easiest path is Vercel.
 
 1. Import the repository.
-2. Set `OPENAI_API_KEY` only if you want live model scoring.
+2. Set `GEMINI_API_KEY` only if you want live model scoring.
 3. Deploy.
 
 The app still works without secrets, which is useful for public judging and safe GitHub sharing.
