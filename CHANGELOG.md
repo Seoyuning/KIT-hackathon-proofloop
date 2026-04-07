@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1.5 - 2026-04-08
+
+- Rework the main demo UI to be Korean-first, with localized section titles, result copy, and instructor-facing labels.
+- Add Korean-friendly input guidance, placeholders, and mobile CTA improvements so beta testers understand the diagnosis flow faster.
+- Align README and submission docs with the live Korean UI labels and updated judging narrative.
+
 ## 0.1.1.4 - 2026-04-07
 
 - Add an 8-second timeout on live Gemini analysis so the app falls back quickly during demos instead of hanging.

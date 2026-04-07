@@ -243,14 +243,14 @@ function countMatches(text: string, patterns: RegExp[]) {
 
 function dimensionNote(score: number, dimension: string) {
   if (score >= 80) {
-    return `${dimension} evidence is strong enough for the instructor to probe deeper instead of re-teaching the basics.`;
+    return `${dimension} 증거가 충분합니다. 기초를 다시 설명하기보다 더 깊은 질문으로 확인해도 됩니다.`;
   }
 
   if (score >= 65) {
-    return `${dimension} is visible, but the learner still needs a short verbal or hands-on check before this is considered secure.`;
+    return `${dimension} 신호는 보이지만, 짧은 구두 확인이나 손코딩 점검이 한 번 더 필요합니다.`;
   }
 
-  return `${dimension} evidence is thin. The current artifact looks finished faster than the reasoning behind it.`;
+  return `${dimension} 증거가 약합니다. 결과물 완성 속도에 비해 이해 설명이 따라오지 못하고 있습니다.`;
 }
 
 function buildPriority(score: number, independenceScore: number): CoachPriority {
@@ -304,79 +304,79 @@ export function heuristicDiagnosis(payload: DiagnosisPayload, mode: DiagnosisMod
   const riskFlags: string[] = [];
 
   if (independenceScore < 60) {
-    riskFlags.push("AI trace suggests answer-seeking behavior that can hide shallow understanding.");
+    riskFlags.push("AI 대화 흔적에서 정답 요구 성향이 보여, 얕은 이해가 가려질 가능성이 있습니다.");
   }
 
   if (conceptScore < 62 && missingConcepts.length > 0) {
-    riskFlags.push(`The submission never clearly explains core ideas like ${missingConcepts.slice(0, 2).join(", ")}.`);
+    riskFlags.push(`제출물에서 ${missingConcepts.slice(0, 2).join(", ")} 같은 핵심 개념 설명이 충분히 드러나지 않습니다.`);
   }
 
   if (transferScore < 64) {
-    riskFlags.push("The learner can describe what exists, but not how it changes under a new requirement.");
+    riskFlags.push("현재 결과물은 설명하지만, 요구사항이 바뀌었을 때 어떻게 수정할지는 보여주지 못했습니다.");
   }
 
   if (reflectionScore < 60) {
-    riskFlags.push("There is not enough evidence of reasoning, trade-offs, or root-cause thinking.");
+    riskFlags.push("왜 그렇게 설계했는지, 어떤 trade-off가 있었는지, 무엇이 원인이었는지에 대한 설명이 부족합니다.");
   }
 
   if (riskFlags.length === 0) {
-    riskFlags.push("No urgent learning-risk signal detected. Keep a light-touch monitor rather than heavy intervention.");
+    riskFlags.push("즉시 개입이 필요한 위험 신호는 크지 않습니다. 강한 개입보다 가벼운 경과 관찰이 적절합니다.");
   }
 
   const misconceptions = unique(
     [
       missingConcepts[0]
-        ? `The learner references the output, but not the role of ${missingConcepts[0]} inside the workflow.`
+        ? `결과물은 언급하지만, ${missingConcepts[0]}가 전체 흐름에서 왜 필요한지는 충분히 설명하지 못합니다.`
         : "",
       dependenceHits > 0
-        ? "The AI prompt history leans toward asking for solutions instead of asking for hints, checks, or alternatives."
+        ? "AI 사용 방식이 힌트나 검증보다 정답 요청 쪽으로 기울어 있습니다."
         : "",
       transferScore < 68
-        ? "The learner has not shown they can adapt the work when the input, failure mode, or requirement changes."
+        ? "입력 조건이나 실패 상황, 요구사항이 바뀌어도 해결 방식을 바꿀 수 있는지는 아직 드러나지 않았습니다."
         : "",
       reflectionScore < 63
-        ? "The explanation is result-oriented, not reasoning-oriented. 'What it does' is stronger than 'why it works.'"
+        ? "설명이 결과 중심입니다. '무엇을 했다'는 보이지만, '왜 그렇게 했는지'는 상대적으로 약합니다."
         : "",
     ].filter(Boolean),
   ).slice(0, 3);
 
-  const focusConcept = missingConcepts[0] ?? matchedConcepts[0] ?? "the main design decision";
+  const focusConcept = missingConcepts[0] ?? matchedConcepts[0] ?? "핵심 설계 판단";
   const defenseQuestions = unique(
     [
-      `Without opening the code, explain why ${focusConcept} exists and what breaks if you remove it.`,
-      `Change one requirement in this assignment. Which part of your solution changes first, and why?`,
-      `Point to one line or decision you would undo after testing with a real learner or instructor.`,
+      `코드를 열지 말고 설명해 보세요. 왜 ${focusConcept}가 필요하고, 이걸 빼면 무엇이 깨지나요?`,
+      "이 과제의 요구사항 하나를 바꾼다면, 어디를 가장 먼저 수정해야 하나요? 이유도 함께 설명해 보세요.",
+      "실제 사용자나 교강사 피드백을 받는다면, 지금 해결 방식 중 무엇을 가장 먼저 되돌리거나 바꾸겠나요?",
     ],
   );
 
   const interventionPlan = [
-    `Run a 3-minute oral defense focused on ${focusConcept} before accepting the assignment as mastered.`,
-    "Give one transfer task: change the constraint, data shape, or edge case, and ask the learner to patch it live.",
+    `${focusConcept}를 중심으로 3분짜리 구두 확인을 먼저 진행하고, 그다음 숙달 여부를 판단합니다.`,
+    "조건이나 데이터 형태, 예외 상황을 하나 바꾼 전이 과제를 주고 바로 수정하게 해 보세요.",
     dependenceHits > 0
-      ? "Switch the learner to a 'hint-first' AI prompt template for the next session and require a reflection note after each AI turn."
-      : "Keep AI access open, but require one explicit trade-off note and one self-test step in the next submission.",
+      ? "다음 세션부터는 '정답 요청' 대신 '힌트 우선' 프롬프트 템플릿을 쓰게 하고, AI 턴마다 짧은 회고를 남기게 하세요."
+      : "AI 사용은 허용하되, 다음 제출에서는 trade-off 한 줄과 자기 점검 한 단계를 반드시 남기게 하세요.",
   ];
 
   const strongestSignal =
     evidenceScore >= 80
-      ? "The artifact includes enough reasoning and adaptation language to trust the learner's momentum."
+      ? "설명과 전이 신호가 충분해, 이 학습자는 다음 단계로 밀어줘도 괜찮습니다."
       : evidenceScore >= 66
-        ? "There is real progress here, but the instructor still needs a targeted probe before declaring mastery."
-        : "The deliverable looks ahead of the learner's explanation, which is exactly where hidden learning debt appears.";
+        ? "분명한 진전은 있지만, 숙달로 인정하려면 교강사의 짧은 확인 질문이 한 번 더 필요합니다."
+        : "결과물 완성 속도가 설명보다 앞서 있습니다. 숨은 학습 부채가 생길 때 자주 보이는 패턴입니다.";
 
   const opportunityWindow =
     evidenceScore >= 80
-      ? "Promote this learner into peer-support or mentor mode. Their explanation quality is strong enough to help others."
+      ? "이 학습자는 피어 서포트나 멘토 역할까지 확장해도 될 정도로 설명 품질이 안정적입니다."
       : evidenceScore >= 66
-        ? "A short teacher intervention now will likely unlock understanding before confusion hardens into false confidence."
-        : "This is the moment to intervene. If the learner ships more work without defending it, the gap will compound.";
+        ? "지금 짧게 개입하면, 혼란이 자신감 착시로 굳기 전에 이해를 붙잡을 수 있습니다."
+        : "지금이 개입 시점입니다. 설명 없이 결과물만 더 쌓이면 학습 격차가 빠르게 커집니다.";
 
   const verdict =
     evidenceScore >= 80
-      ? "Proof of learning is visible. The next move is stretch work, not remediation."
+      ? "이해의 증거가 충분히 보입니다. 보충보다 확장 과제를 주는 편이 맞습니다."
       : evidenceScore >= 66
-        ? "Partial understanding is visible, but the work still needs a focused defense before it counts as true mastery."
-        : "The submission is finished, but the evidence of learning is not. Instructor intervention should happen before the learner moves on.";
+        ? "부분적인 이해는 보이지만, 진짜 숙달로 보기 전에 집중 확인이 한 번 더 필요합니다."
+        : "제출은 끝났지만 이해의 증거는 아직 부족합니다. 다음 단계로 넘어가기 전에 개입이 필요합니다.";
 
   const coachPriority = buildPriority(evidenceScore, independenceScore);
   const studentNudge =
@@ -384,9 +384,25 @@ export function heuristicDiagnosis(payload: DiagnosisPayload, mode: DiagnosisMod
       ? "다음 AI 요청부터는 '정답' 대신 '내 풀이의 약한 부분 2개만 지적해줘'처럼 질문하세요. 그래야 실력이 남습니다."
       : "좋습니다. 다음 제출에서는 '왜 이 구조를 택했는지'를 한 문장 더 남겨서 이해의 증거를 강화하세요.";
 
-  const instructorSummary = `${payload.studentName || "이 학습자"} is in the ${coachPriority.toLowerCase()} lane. Their strongest gap is ${evidenceBreakdown
-    .slice()
-    .sort((left, right) => left.score - right.score)[0].label.toLowerCase()}, and the fastest verification path is a short oral defense plus one live transfer edit.`;
+  const weakestMetricLabel =
+    evidenceBreakdown
+      .slice()
+      .sort((left, right) => left.score - right.score)[0].label;
+
+  const metricNameMap: Record<string, string> = {
+    "Concept coverage": "핵심 개념 이해",
+    "Transfer ability": "전이 및 응용",
+    "Reflection depth": "설명과 반성 깊이",
+    "Independent thinking": "독립적 사고",
+  };
+
+  const priorityNameMap: Record<CoachPriority, string> = {
+    Immediate: "즉시 개입",
+    "This week": "이번 주 코칭",
+    Monitor: "경과 관찰",
+  };
+
+  const instructorSummary = `${payload.studentName || "이 학습자"}는 현재 '${priorityNameMap[coachPriority]}' 구간입니다. 가장 먼저 확인할 축은 '${metricNameMap[weakestMetricLabel] ?? weakestMetricLabel}'이며, 가장 빠른 검증 방법은 짧은 구두 확인과 즉석 전이 과제입니다.`;
 
   return {
     mode,
@@ -449,11 +465,11 @@ export function normalizeDiagnosis(raw: unknown, fallback: DiagnosisResult, mode
             label:
               typeof row.label === "string" && row.label.trim().length > 0
                 ? row.label.trim()
-                : fallback.evidenceBreakdown[index]?.label ?? `Metric ${index + 1}`,
+                : fallback.evidenceBreakdown[index]?.label ?? `지표 ${index + 1}`,
             score: toScore(row.score, fallback.evidenceBreakdown[index]?.score ?? 50),
             note: toNonEmptyString(
               row.note,
-              fallback.evidenceBreakdown[index]?.note ?? "No note available.",
+              fallback.evidenceBreakdown[index]?.note ?? "설명 정보가 충분하지 않습니다.",
             ),
           };
         })
@@ -532,6 +548,7 @@ Use these exact evidenceBreakdown labels in this exact order:
 2. Transfer ability
 3. Reflection depth
 4. Independent thinking
+Write every free-text field in natural Korean for Korean instructors and learners.
 Return JSON only.
 
 Payload:
@@ -549,7 +566,7 @@ ${JSON.stringify(payload, null, 2)}`;
           system_instruction: {
             parts: [
               {
-                text: "You analyze AI-assisted student work and produce instructor-ready JSON only.",
+                text: "You analyze AI-assisted student work and produce instructor-ready JSON only. All narrative fields must be written in natural Korean.",
               },
             ],
           },

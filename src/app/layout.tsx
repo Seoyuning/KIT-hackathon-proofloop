@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const notoSansKr = Noto_Sans_KR({
+  variable: "--font-noto-sans-kr",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
+});
+
+const notoSerifKr = Noto_Serif_KR({
+  variable: "--font-noto-serif-kr",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -19,9 +26,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProofLoop | AI Learning Evidence Radar",
+  title: "ProofLoop | AI 학습 증거 레이더",
   description:
-    "ProofLoop is an AI-powered learning evidence radar for coding education teams. It diagnoses whether learners truly understand AI-assisted work and tells instructors who needs intervention next.",
+    "ProofLoop는 AI로 완성한 결과물이 아니라 실제 이해의 증거를 진단하고, 교강사에게 누구를 먼저 개입해야 하는지 알려주는 AI 학습 증거 레이더입니다.",
 };
 
 export default function RootLayout({
@@ -32,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${spaceGrotesk.variable} ${fraunces.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${notoSansKr.variable} ${fraunces.variable} ${notoSerifKr.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

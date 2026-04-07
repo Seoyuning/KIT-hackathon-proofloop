@@ -1,108 +1,108 @@
 # ProofLoop
 
-ProofLoop is an AI learning evidence radar for coding education teams.
+ProofLoop는 코딩 교육 현장을 위한 AI 학습 증거 레이더입니다.
 
-Instead of helping learners finish faster, it helps instructors answer the harder question:
+학생이 과제를 더 빨리 끝내게 돕는 대신, 교강사가 더 어려운 질문에 답하도록 돕습니다.
 
-> "Did this learner actually understand the AI-assisted work they just submitted?"
+> "이 학생은 AI 도움을 받아 과제를 제출했는데, 정말 이해하고 있는가?"
 
-The app reads three inputs together:
+앱은 아래 세 가지 입력을 함께 읽습니다.
 
-- assignment brief
-- learner submission or explanation
-- AI prompt trace
+- 과제 설명
+- 학생 제출물 또는 설명
+- AI 대화 흔적
 
-Then it produces:
+그다음 아래 결과를 생성합니다.
 
-- learning evidence score
-- risk flags for hidden learning debt
-- adaptive defense questions
-- instructor intervention plan
-- cohort-level coaching priority
+- 이해 증거 점수
+- 숨은 학습 부채 위험 신호
+- 적응형 구두 확인 질문
+- 교강사 개입 액션
+- 반 단위 코칭 우선순위
 
-## Why this concept fits the hackathon
+## 해커톤 적합성
 
-The competition asks for an AI solution that solves real education pain, not another LMS.
+이 대회는 단순 LMS가 아니라 실제 교육 현장의 페인 포인트를 해결하는 AI 솔루션을 요구합니다.
 
-ProofLoop targets a new pain point created by AI-native learning environments:
+ProofLoop는 AI 시대의 학습 환경이 새로 만든 문제를 겨냥합니다.
 
-- learners can now ship assignments with AI support faster than ever
-- instructors have less visibility into whether real understanding exists
-- operators discover weak understanding too late, after confidence drops or attrition starts
+- 학생은 AI를 써서 과제를 더 빨리 완성할 수 있습니다.
+- 교강사는 그 결과가 진짜 이해를 반영하는지 보기 더 어려워졌습니다.
+- 운영자는 자신감 하락이나 이탈이 시작된 뒤에야 학습 부채를 발견하게 됩니다.
 
-This makes ProofLoop practical, current, and differentiated from generic tutors or grading assistants.
+그래서 ProofLoop는 실무적이고, 지금 시점에 맞고, 일반적인 튜터나 채점 보조와도 분명히 다릅니다.
 
-## Product structure
+## 제품 구조
 
-### 1. Diagnosis Studio
+### 1. 진단 스튜디오
 
-Input one learner case and generate:
+학생 한 명의 사례를 넣으면 아래를 생성합니다.
 
-- concept coverage score
-- transfer ability score
-- reflection depth score
-- independent thinking score
-- coach priority
+- 핵심 개념 이해 점수
+- 전이 및 응용 점수
+- 설명과 반성 깊이 점수
+- 독립적 사고 점수
+- 개입 우선순위
 
-### 2. Instructor Radar
+### 2. 교강사 레이더
 
-Review a cohort sorted by intervention priority rather than by raw completion status.
+완료율이 아니라 개입 우선순위 기준으로 반 전체를 재정렬해 보여줍니다.
 
-### 3. AI strategy layer
+### 3. AI 전략 레이어
 
-The MVP includes two execution modes:
+MVP는 두 가지 실행 경로를 가집니다.
 
-- `Demo AI` fallback: deterministic evaluator that always works in public demos and without secrets
-- `Live AI` mode: optional runtime scoring through the Gemini API when `GEMINI_API_KEY` is configured
+- `데모 안전 모드`: 공개 데모와 무비밀 환경에서도 항상 동작하는 내장 평가기
+- `실시간 AI`: `GEMINI_API_KEY`가 있을 때 Gemini API를 이용해 서술형 진단을 강화하는 경로
 
-## Tech stack
+## 기술 스택
 
 - Next.js 16
 - React 19
 - TypeScript
 - Tailwind CSS 4
-- Optional Gemini runtime integration via `src/app/api/diagnose/route.ts`
+- 선택형 Gemini 런타임 연동: `src/app/api/diagnose/route.ts`
 
-## Local run
+## 로컬 실행
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+브라우저에서 `http://localhost:3000`을 엽니다.
 
-## Environment variables
+## 환경 변수
 
-Copy `.env.example` to `.env.local` if you want live model scoring:
+실시간 AI 진단을 쓰려면 `.env.example`을 `.env.local`로 복사한 뒤 아래 값을 넣으세요.
 
 ```bash
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-If the API key is missing or the model call fails, the app automatically falls back to the built-in demo evaluator.
+API 키가 없거나 모델 호출이 실패하면 앱은 자동으로 데모 안전 모드로 전환됩니다.
 
-## Deploy
+## 배포
 
-The easiest path is Vercel.
+가장 간단한 경로는 Vercel입니다.
 
-1. Import the repository.
-2. Set `GEMINI_API_KEY` only if you want live model scoring.
-3. Deploy.
+1. 저장소를 Import 합니다.
+2. 실시간 AI가 필요할 때만 `GEMINI_API_KEY`를 설정합니다.
+3. 배포합니다.
 
-The app still works without secrets, which is useful for public judging and safe GitHub sharing.
+비밀값 없이도 앱이 동작하므로 공개 심사와 GitHub 공개 저장소 운영에 유리합니다.
 
-## Submission support docs
+## 제출 지원 문서
 
-- [Product strategy](./docs/proofloop-design.md)
-- [AI report final draft](./docs/AI_REPORT_DRAFT.md)
-- [90-second demo script](./docs/DEMO_SCRIPT.md)
-- [Submission checklist](./docs/SUBMISSION_CHECKLIST.md)
+- [제품/기획 문서](./docs/proofloop-design.md)
+- [AI 리포트 최종 초안](./docs/AI_REPORT_DRAFT.md)
+- [90초 데모 스크립트](./docs/DEMO_SCRIPT.md)
+- [제출 체크리스트](./docs/SUBMISSION_CHECKLIST.md)
 
-## Verification
+## 검증
 
-The current build passes:
+현재 빌드는 아래 검증을 통과합니다.
 
 ```bash
 npm run lint

@@ -27,9 +27,9 @@
   --color-amber: var(--amber);
   --color-red: var(--red);
   --color-navy: var(--navy);
-  --font-sans: var(--font-space-grotesk);
+  --font-sans: var(--font-noto-sans-kr);
   --font-mono: var(--font-ibm-plex-mono);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-noto-serif-kr);
 }
 
 * {
@@ -43,7 +43,10 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-space-grotesk), sans-serif;
+  font-family: var(--font-noto-sans-kr), sans-serif;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   background-image:
     radial-gradient(circle at top left, rgba(242, 185, 75, 0.36), transparent 22%),
     radial-gradient(circle at top right, rgba(11, 143, 128, 0.18), transparent 26%),
@@ -67,6 +70,16 @@ a {
   color: inherit;
 }
 
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
 ::selection {
   background: rgba(11, 143, 128, 0.18);
 }
@@ -79,14 +92,16 @@ a {
 }
 
 .display-title {
-  font-family: var(--font-fraunces), serif;
+  font-family: var(--font-fraunces), var(--font-noto-serif-kr), serif;
   letter-spacing: -0.04em;
+  text-wrap: balance;
 }
 
 .eyebrow {
-  font-family: var(--font-ibm-plex-mono), monospace;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+  font-family: var(--font-noto-sans-kr), sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: none;
 }
 
 .pill {

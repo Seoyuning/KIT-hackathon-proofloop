@@ -4,7 +4,7 @@ import type { CohortStudent, DemoCase, DiagnosisPayload } from "@/lib/types";
 export const demoCases: DemoCase[] = [
   {
     id: "minjun",
-    label: "Fast finisher",
+    label: "빠른 완성형",
     studentName: "민준",
     track: "프론트엔드 부트캠프",
     persona: "결과물은 빨리 내지만 AI 의존도가 높은 학습자",
@@ -18,7 +18,7 @@ export const demoCases: DemoCase[] = [
   },
   {
     id: "seoyeon",
-    label: "Deep learner",
+    label: "깊이 이해형",
     studentName: "서연",
     track: "프론트엔드 부트캠프",
     persona: "AI를 도구로 쓰되 스스로 검증하는 학습자",
@@ -32,7 +32,7 @@ export const demoCases: DemoCase[] = [
   },
   {
     id: "doyun",
-    label: "Silent struggler",
+    label: "조용한 취약형",
     studentName: "도윤",
     track: "백엔드 부트캠프",
     persona: "겉으로는 조용하지만 개념 연결이 약한 학습자",
@@ -46,10 +46,10 @@ export const demoCases: DemoCase[] = [
   },
   {
     id: "jiwoo",
-    label: "False confidence",
+    label: "착시 자신감형",
     studentName: "지우",
     track: "AI 서비스 기획",
-    persona: "문서를 매끈하게 쓰지만 논리 연결이 빈 약한 학습자",
+    persona: "문서를 매끈하게 쓰지만 논리 연결이 비는 학습자",
     assignmentTitle: "AI 상담 챗봇 운영 설계",
     assignmentBrief:
       "학원 수강생 문의 챗봇을 설계하라. 개인정보 최소 수집 원칙, human handoff 기준, 환각 응답을 줄이기 위한 안전장치를 설명해야 한다.",
@@ -60,7 +60,7 @@ export const demoCases: DemoCase[] = [
   },
   {
     id: "harin",
-    label: "Recovering learner",
+    label: "회복형 학습자",
     studentName: "하린",
     track: "백엔드 부트캠프",
     persona: "처음엔 막혔지만 스스로 재구성하며 회복 중인 학습자",

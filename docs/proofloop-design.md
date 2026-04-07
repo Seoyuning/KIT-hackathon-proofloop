@@ -1,129 +1,129 @@
 # Design: ProofLoop
 
-Generated for the 2026 Korea IT Academy Vibe Coding Hackathon  
+2026 Korea IT Academy Vibe Coding Hackathon용 기획 문서  
 Mode: Builder fast-track  
-Status: Draft approved for MVP implementation
+Status: MVP 구현 기준 승인 초안
 
-## Problem
+## 문제 정의
 
-AI has made assignment completion faster, but it has also made real understanding harder to see.
+AI는 과제 완성 속도를 높였지만, 실제 이해를 더 보기 어렵게 만들었습니다.
 
-In coding education environments, instructors now face a new operational problem:
+코딩 교육 현장에서 교강사는 이제 새로운 운영 문제를 마주합니다.
 
-- a learner can produce a polished deliverable with AI support
-- the instructor still cannot tell whether the learner understands the design decisions
-- weak understanding is discovered later, when the next assignment breaks or the learner loses confidence
+- 학생은 AI 도움으로 매끈한 결과물을 빠르게 만들 수 있습니다.
+- 하지만 교강사는 그 학생이 설계 판단을 실제로 이해했는지 알기 어렵습니다.
+- 얕은 이해는 다음 과제에서 무너지거나 자신감이 꺾인 뒤에야 드러납니다.
 
-This is not an LMS problem. It is a visibility and intervention problem created by AI-native learning.
+이건 LMS 문제가 아닙니다. AI 네이티브 학습 환경이 만든 가시성 부족과 개입 타이밍의 문제입니다.
 
-## Why Now
+## 왜 지금인가
 
-- AI tutors and coding copilots are spreading quickly in education.
-- Teacher-assistant products already help with lesson planning and grading.
-- The next gap is not "more content generation" but "proof of learning after AI assistance."
+- AI 튜터와 코딩 코파일럿은 교육 현장에 빠르게 확산되고 있습니다.
+- 강의 준비와 채점 보조를 돕는 제품은 이미 많습니다.
+- 다음 공백은 "더 많은 생성"이 아니라 "AI 도움 이후 학습 증거 검증"입니다.
 
-That gap is sharp, current, and easy for judges to understand in one sentence.
+이 공백은 지금 시점에 날카롭고, 심사위원도 한 문장으로 바로 이해할 수 있습니다.
 
-## Target User & Narrowest Wedge
+## 타깃 사용자와 가장 좁은 진입점
 
-### Primary user
+### 주요 사용자
 
-Coding bootcamp and academy instructors who review learner submissions every day.
+매일 학생 제출물을 검토하는 코딩 부트캠프·학원 교강사
 
-### Secondary users
+### 보조 사용자
 
-- learners who want more honest feedback than "it works"
-- operations managers who need early warning on hidden learning debt and dropout risk
+- "동작합니다" 이상의 정직한 피드백을 원하는 학습자
+- 숨은 학습 부채와 이탈 위험을 조기에 보고 싶은 운영자
 
-### Narrowest wedge
+### 가장 좁은 진입점
 
-One instructor reviewing one learner's AI-assisted coding assignment.
+교강사 한 명이 학습자 한 명의 AI 보조 과제를 검토하는 순간
 
-The smallest useful version is:
+가장 작은 유효 제품은 아래와 같습니다.
 
-- input the assignment brief
-- input the learner's submission or explanation
-- input the AI prompt trace
-- get a learning evidence diagnosis and the next intervention step
+- 과제 설명 입력
+- 학생 제출물 또는 설명 입력
+- AI 대화 흔적 입력
+- 이해 증거 진단과 다음 개입 액션 생성
 
-## Alternatives Considered
+## 고려한 대안
 
-### Alternative A: AI tutor
+### 대안 A: AI 튜터
 
-Rejected because the space is crowded and the value proposition is familiar.
+시장 포화도가 높고 가치 제안이 익숙해 차별점이 약하므로 제외
 
-### Alternative B: AI grading assistant
+### 대안 B: AI 채점 보조
 
-Rejected because it optimizes teacher time, but it does not solve the new AI-era blind spot: hidden shallow understanding.
+교강사 시간을 줄여주긴 하지만, AI 시대의 핵심 사각지대인 숨은 얕은 이해를 해결하지 못하므로 제외
 
-### Alternative C: ProofLoop
+### 대안 C: ProofLoop
 
-Chosen because it addresses a new pain point created by AI itself and gives a crisp demo story:
+AI가 직접 만든 새로운 페인 포인트를 다루고, 데모 메시지도 선명하므로 채택
 
-> "This learner finished the task, but did they actually learn?"
+> "이 학습자는 과제를 끝냈지만, 실제로 배운 걸까?"
 
-## Recommended Approach
+## 권장 접근
 
-Build a polished web demo with three layers:
+세 개의 층으로 구성된 웹 데모를 만든다.
 
-### 1. Diagnosis Studio
+### 1. 진단 스튜디오
 
-Single learner workflow for judges and instructors.
+학생 한 명을 집중 진단하는 흐름
 
-Outputs:
+출력 결과
 
-- evidence score
-- risk flags
-- misconceptions
-- adaptive defense questions
-- intervention plan
+- 이해 증거 점수
+- 위험 신호
+- 예상 오개념
+- 구두 확인 질문
+- 개입 액션
 
-### 2. Instructor Radar
+### 2. 교강사 레이더
 
-Cohort view that sorts learners by coaching priority rather than by completion status.
+완료 상태가 아니라 코칭 우선순위 기준으로 학습자를 재정렬하는 반 단위 화면
 
-### 3. AI strategy panel
+### 3. AI 전략 패널
 
-Explain the system design clearly:
+시스템 구조를 명확하게 설명
 
-- evidence capture
-- reasoning diagnosis
-- instructor action generation
+- 증거 수집
+- 이해 진단
+- 교강사 액션 생성
 
-## AI Execution Strategy
+## AI 실행 전략
 
-### MVP runtime
+### MVP 런타임
 
-- deterministic heuristic evaluator for reliability in public demos
-- optional live model scoring via the Gemini API when an API key is configured
+- 공개 데모 안정성을 위한 결정론적 내장 평가기
+- API 키가 있을 때만 활성화되는 Gemini 기반 실시간 서술 보강
 
-### Why this split is smart
+### 왜 이 구조가 좋은가
 
-- public GitHub stays safe with no exposed secrets
-- live deployment still works even if a model call fails
-- judges can experience the product flow without waiting for unstable external dependencies
+- 공개 GitHub에 비밀값을 노출하지 않아도 된다.
+- 모델 호출이 실패해도 배포본 흐름이 유지된다.
+- 심사위원이 외부 API 지연 없이 제품 흐름을 확인할 수 있다.
 
-## Constraints
+## 제약 조건
 
-- the repository started empty, so the MVP must be fast to scaffold and easy to deploy
-- public repo requirement means secrets cannot be embedded
-- hackathon judging rewards clarity and demo reliability, not just raw complexity
+- 저장소가 비어 있는 상태에서 시작했으므로 빠른 구축과 쉬운 배포가 필요하다.
+- Public 저장소 조건 때문에 비밀값을 코드에 넣을 수 없다.
+- 해커톤 심사는 복잡도보다 명확한 메시지와 데모 안정성을 더 높게 본다.
 
-## Success Criteria
+## 성공 기준
 
-- a judge understands the problem in under 20 seconds
-- the live demo shows both individual diagnosis and cohort prioritization
-- the repository documents the concept and AI strategy clearly
-- the app builds and deploys cleanly without secret leakage
+- 심사위원이 20초 안에 문제를 이해한다.
+- 라이브 데모가 개별 진단과 반 단위 우선순위를 모두 보여준다.
+- 저장소 문서가 컨셉과 AI 전략을 명확히 설명한다.
+- 앱이 비밀값 노출 없이 안정적으로 빌드·배포된다.
 
-## Open Questions
+## 남은 질문
 
-- Should the final submitted deployment use live AI scoring or stay fully demo-safe?
-- Will the team add user authentication or keep the judging version as a single-page demo?
-- Should the next iteration include file upload support for code artifacts?
+- 최종 제출본은 실시간 AI를 켜 둘 것인가, 데모 안전 모드 중심으로 갈 것인가?
+- 심사용 버전은 단일 페이지 데모로 유지할 것인가, 인증을 붙일 것인가?
+- 다음 버전에서 코드 파일 업로드까지 확장할 것인가?
 
-## Distribution Plan
+## 배포 계획
 
-- public GitHub repository for source review
-- Vercel deployment for the live URL
-- AI report PDF drafted from `docs/AI_REPORT_DRAFT.md`
+- 소스 검토용 Public GitHub 저장소
+- 라이브 URL용 Vercel 배포
+- `docs/AI_REPORT_DRAFT.md` 기반 AI 리포트 PDF

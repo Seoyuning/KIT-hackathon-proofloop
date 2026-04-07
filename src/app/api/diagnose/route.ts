@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
 
   if (!isPayload(body)) {
-    return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+    return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
   }
 
   const validationMessage = getPayloadValidationMessage(body);
