@@ -160,7 +160,7 @@ const schema = {
   ],
   properties: {
     verdict: { type: "string" },
-    evidenceScore: { type: "number" },
+    evidenceScore: { type: "integer", minimum: 0, maximum: 100 },
     coachPriority: {
       type: "string",
       enum: ["Immediate", "This week", "Monitor"],
@@ -176,8 +176,16 @@ const schema = {
         additionalProperties: false,
         required: ["label", "score", "note"],
         properties: {
-          label: { type: "string" },
-          score: { type: "number" },
+          label: {
+            type: "string",
+            enum: [
+              "Concept coverage",
+              "Transfer ability",
+              "Reflection depth",
+              "Independent thinking",
+            ],
+          },
+          score: { type: "integer", minimum: 0, maximum: 100 },
           note: { type: "string" },
         },
       },
@@ -489,6 +497,18 @@ function extractGeminiText(data: unknown) {
   return text.length > 0 ? text : null;
 }
 
+function mergeLiveNarrativeWithFallbackMetrics(
+  live: DiagnosisResult,
+  fallback: DiagnosisResult,
+): DiagnosisResult {
+  return {
+    ...live,
+    evidenceScore: fallback.evidenceScore,
+    coachPriority: fallback.coachPriority,
+    evidenceBreakdown: fallback.evidenceBreakdown,
+  };
+}
+
 export async function analyzeWithOptionalGemini(payload: DiagnosisPayload) {
   const fallback = heuristicDiagnosis(payload, "demo_ai");
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -503,6 +523,13 @@ export async function analyzeWithOptionalGemini(payload: DiagnosisPayload) {
 
 Return a balanced diagnosis of whether the learner truly understands the work.
 Be specific, practical, and instructor-ready.
+Use integer percentage scores from 0 to 100.
+Use these exact evidenceBreakdown labels in this exact order:
+1. Concept coverage
+2. Transfer ability
+3. Reflection depth
+4. Independent thinking
+Return JSON only.
 
 Payload:
 ${JSON.stringify(payload, null, 2)}`;
@@ -530,6 +557,7 @@ ${JSON.stringify(payload, null, 2)}`;
           },
         ],
         generationConfig: {
+          temperature: 0.2,
           responseMimeType: "application/json",
           responseJsonSchema: schema,
         },
@@ -549,7 +577,8 @@ ${JSON.stringify(payload, null, 2)}`;
     }
 
     const parsed = JSON.parse(outputText);
-    return normalizeDiagnosis(parsed, fallback, "live_ai");
+    const live = normalizeDiagnosis(parsed, fallback, "live_ai");
+    return mergeLiveNarrativeWithFallbackMetrics(live, fallback);
   } catch {
     return fallback;
   }
