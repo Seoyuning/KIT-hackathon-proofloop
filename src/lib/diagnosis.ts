@@ -491,8 +491,8 @@ function extractGeminiText(data: unknown) {
 
 export async function analyzeWithOptionalGemini(payload: DiagnosisPayload) {
   const fallback = heuristicDiagnosis(payload, "demo_ai");
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 
   if (!apiKey) {
     return fallback;
