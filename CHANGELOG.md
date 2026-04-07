@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1.2 - 2026-04-07
+
+- Keep Gemini for live narrative analysis while preserving deterministic scoring and priority metrics.
+
 ## 0.1.1.1 - 2026-04-07
 
 - Trim Gemini environment values at runtime so Vercel input whitespace does not break live scoring.
