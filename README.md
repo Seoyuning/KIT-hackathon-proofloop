@@ -4,9 +4,10 @@ ProofLoop is an education AI prototype for public education and academy-style cl
 
 The project currently has two surfaces:
 
+- `/` : the main domain entry, permanently redirected to `/studio`
 - `/studio` : the public working application for students and teachers
-- `/` : a private landing preview, hidden unless a preview cookie is present
-- `/preview` : the internal access page for unlocking the private landing preview
+- `/preview` : the internal access page for unlocking the hidden landing preview
+- `/preview/landing` : the hidden landing page, visible only after preview verification
 
 ## Current Product Shape
 
@@ -66,12 +67,12 @@ All of this data currently lives in local source files and is used to simulate t
 
 ## Private Root Preview
 
-The root landing page is intentionally hidden from public traffic.
+The hidden landing page is intentionally kept off the main domain.
 
-- Public users should enter through `/studio`
-- The root `/` returns the hidden landing only after the preview key is verified
+- Public users can enter from `/`, which redirects to `/studio`
+- The hidden landing now lives at `/preview/landing`
 - Configure `LANDING_PREVIEW_KEY` in your environment
-- Visit `/preview`, submit the key, and the app will set a secure preview cookie for `/`
+- Visit `/preview`, submit the key, and the app will set a secure preview cookie for `/preview/landing`
 - Visit `/api/preview?logout=1` to clear the preview cookie
 
 ## Local Development
@@ -83,9 +84,10 @@ npm run dev
 
 Open:
 
+- `http://localhost:3000` -> redirects to `/studio`
 - `http://localhost:3000/studio`
 - `http://localhost:3000/preview`
-- `http://localhost:3000` after the preview cookie is unlocked
+- `http://localhost:3000/preview/landing` after the preview cookie is unlocked
 
 ## Verification
 

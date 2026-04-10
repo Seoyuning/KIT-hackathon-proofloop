@@ -10,6 +10,7 @@ import {
 export async function GET(request: NextRequest) {
   const key = request.nextUrl.searchParams.get("key");
   const logout = request.nextUrl.searchParams.get("logout");
+  const landingPreviewPath = "/preview/landing";
 
   if (logout === "1") {
     const response = NextResponse.redirect(new URL("/preview", request.url));
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/preview?error=1", request.url));
   }
 
-  const response = NextResponse.redirect(new URL("/", request.url));
+  const response = NextResponse.redirect(new URL(landingPreviewPath, request.url));
   response.cookies.set(PREVIEW_COOKIE_NAME, cookieValue, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

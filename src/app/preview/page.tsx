@@ -34,20 +34,21 @@ export default async function PreviewAccessPage({ searchParams }: PreviewPagePro
             <div className="space-y-4">
               <div>
                 <h1 className="display-title text-4xl leading-[0.96] text-navy sm:text-5xl">
-                  Root landing access is now private.
+                  Main domain now opens the studio.
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-muted sm:text-base">
-                  Public traffic should use <span className="font-semibold text-navy">`/studio`</span>.
-                  The root landing page is hidden until the official website launch, and only opens after the
-                  preview key is verified.
+                  Public traffic can enter from the main domain because <span className="font-semibold text-navy">`/`</span>
+                  now redirects to <span className="font-semibold text-navy">`/studio`</span>. The hidden landing page stays
+                  on a separate internal preview route until the official website launch.
                 </p>
               </div>
 
               <div className="rounded-[24px] border border-line bg-white/75 p-5">
                 <p className="text-sm font-semibold text-navy">Current behavior</p>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-muted">
+                  <li>Main domain `/`: permanent redirect to `/studio`</li>
                   <li>Public service URL: `/studio`</li>
-                  <li>Root `/`: hidden unless preview cookie is present</li>
+                  <li>Hidden landing route: `/preview/landing` after preview unlock</li>
                   <li>Logout preview access: `/api/preview?logout=1`</li>
                 </ul>
               </div>
@@ -70,7 +71,7 @@ export default async function PreviewAccessPage({ searchParams }: PreviewPagePro
 
             <div className="rounded-[28px] border border-navy/10 bg-navy px-5 py-5 text-white sm:px-6">
               <p className="eyebrow text-xs text-white/70">Preview Key</p>
-              <h2 className="mt-4 text-2xl font-semibold leading-tight">Open the hidden landing page.</h2>
+              <h2 className="mt-4 text-2xl font-semibold leading-tight">Open the hidden landing preview.</h2>
 
               <form action="/api/preview" className="mt-6 space-y-4" method="get">
                 <label className="block">
@@ -91,8 +92,8 @@ export default async function PreviewAccessPage({ searchParams }: PreviewPagePro
 
                 {!previewEnabled ? (
                   <p className="rounded-2xl border border-[#ffd166]/40 bg-[#ffd166]/10 px-4 py-3 text-sm text-[#ffeab0]">
-                    `LANDING_PREVIEW_KEY` is not configured in this environment yet, so the root landing will stay
-                    hidden for everyone.
+                    `LANDING_PREVIEW_KEY` is not configured in this environment yet, so the hidden landing preview
+                    route will stay locked for everyone.
                   </p>
                 ) : null}
 
