@@ -5,22 +5,39 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export type UserRole = "student" | "teacher";
 
 export interface AuthUser {
+  email: string;
   name: string;
   role: UserRole;
+}
+
+interface StoredUser {
+  email: string;
+  name: string;
+  role: UserRole;
+  passwordHash: string;
 }
 
 interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
-  signup: (name: string, role: UserRole) => void;
-  login: (name: string) => AuthUser | null;
+  signup: (email: string, password: string, name: string, role: UserRole) => string | null;
+  login: (email: string, password: string) => string | null;
   logout: () => void;
 }
 
 const STORAGE_KEY = "proofloop-users";
 const SESSION_KEY = "proofloop-session";
 
-function getStoredUsers(): Record<string, AuthUser> {
+/** Simple hash for localStorage MVP — NOT production-grade. */
+function simpleHash(input: string): string {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
+  }
+  return hash.toString(36);
+}
+
+function getStoredUsers(): Record<string, StoredUser> {
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
@@ -29,7 +46,7 @@ function getStoredUsers(): Record<string, AuthUser> {
   }
 }
 
-function setStoredUsers(users: Record<string, AuthUser>) {
+function setStoredUsers(users: Record<string, StoredUser>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 }
 
@@ -38,12 +55,16 @@ function getSession(): string | null {
   return localStorage.getItem(SESSION_KEY);
 }
 
-function setSession(name: string | null) {
-  if (name) {
-    localStorage.setItem(SESSION_KEY, name);
+function setSession(email: string | null) {
+  if (email) {
+    localStorage.setItem(SESSION_KEY, email);
   } else {
     localStorage.removeItem(SESSION_KEY);
   }
+}
+
+function toAuthUser(stored: StoredUser): AuthUser {
+  return { email: stored.email, name: stored.name, role: stored.role };
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -58,14 +79,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session on mount
   useEffect(() => {
-    const sessionName = getSession();
-    if (sessionName) {
+    const sessionEmail = getSession();
+    if (sessionEmail) {
       const users = getStoredUsers();
-      const found = users[sessionName];
+      const found = users[sessionEmail];
       if (found) {
-        setUser(found);
+        setUser(toAuthUser(found));
       } else {
         setSession(null);
       }
@@ -73,29 +93,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  function signup(name: string, role: UserRole) {
-    const trimmed = name.trim();
-    if (!trimmed) return;
+  /** Returns error message or null on success. */
+  function signup(email: string, password: string, name: string, role: UserRole): string | null {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = name.trim();
 
-    const newUser: AuthUser = { name: trimmed, role };
+    if (!trimmedEmail) return "이메일을 입력해 주세요.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) return "올바른 이메일 형식이 아닙니다.";
+    if (!password) return "비밀번호를 입력해 주세요.";
+    if (password.length < 4) return "비밀번호는 4자 이상이어야 합니다.";
+    if (!trimmedName) return "이름을 입력해 주세요.";
+
     const users = getStoredUsers();
-    users[trimmed] = newUser;
+    if (users[trimmedEmail]) return "이미 가입된 이메일입니다.";
+
+    const newUser: StoredUser = {
+      email: trimmedEmail,
+      name: trimmedName,
+      role,
+      passwordHash: simpleHash(password),
+    };
+    users[trimmedEmail] = newUser;
     setStoredUsers(users);
-    setSession(trimmed);
-    setUser(newUser);
+    setSession(trimmedEmail);
+    setUser(toAuthUser(newUser));
+    return null;
   }
 
-  function login(name: string): AuthUser | null {
-    const trimmed = name.trim();
-    if (!trimmed) return null;
+  /** Returns error message or null on success. */
+  function login(email: string, password: string): string | null {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedEmail) return "이메일을 입력해 주세요.";
+    if (!password) return "비밀번호를 입력해 주세요.";
 
     const users = getStoredUsers();
-    const found = users[trimmed];
-    if (found) {
-      setSession(trimmed);
-      setUser(found);
-      return found;
-    }
+    const found = users[trimmedEmail];
+    if (!found) return "등록되지 않은 이메일입니다.";
+    if (found.passwordHash !== simpleHash(password)) return "비밀번호가 일치하지 않습니다.";
+
+    setSession(trimmedEmail);
+    setUser(toAuthUser(found));
     return null;
   }
 

@@ -16,29 +16,27 @@ export default function LoginPage() {
   const { signup, login } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [error, setError] = useState("");
 
   function handleLogin() {
-    if (!name.trim()) {
-      setError("이름을 입력해 주세요.");
-      return;
-    }
-    const user = login(name);
-    if (!user) {
-      setError("등록되지 않은 이름입니다. 회원가입을 먼저 해 주세요.");
-      return;
-    }
-    router.push(user.role === "student" ? "/studio/chat" : "/studio/analysis");
+    const err = login(email, password);
+    if (err) { setError(err); return; }
+    // login sets user in context; read role from stored data
+    const role = selectedRole; // fallback, but login already set user
+    // Re-read from context after login — redirect based on stored role
+    // Since login returns null on success, we need to check localStorage
+    const stored = JSON.parse(localStorage.getItem("proofloop-users") ?? "{}");
+    const found = stored[email.trim().toLowerCase()];
+    router.push(found?.role === "student" ? "/studio/chat" : "/studio/analysis");
   }
 
   function handleSignup() {
-    if (!name.trim()) {
-      setError("이름을 입력해 주세요.");
-      return;
-    }
-    signup(name, selectedRole);
+    const err = signup(email, password, name, selectedRole);
+    if (err) { setError(err); return; }
     router.push(selectedRole === "student" ? "/studio/chat" : "/studio/analysis");
   }
 
@@ -59,47 +57,74 @@ export default function LoginPage() {
           </h1>
           <p className="mt-2 text-sm text-muted">
             {mode === "login"
-              ? "등록한 이름으로 로그인하세요."
-              : "이름과 역할을 선택해 가입하세요."}
+              ? "이메일과 비밀번호로 로그인하세요."
+              : "계정을 만들고 역할을 선택하세요."}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 app-panel rounded-[28px] p-6 space-y-5">
-          {/* Name input */}
+          {/* Email */}
           <label className="block">
-            <span className="mb-2 block text-sm font-medium text-navy">이름</span>
+            <span className="mb-2 block text-sm font-medium text-navy">이메일</span>
             <input
+              type="email"
               className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-teal"
-              placeholder="이름을 입력하세요"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               autoFocus
             />
           </label>
 
-          {/* Role selection (signup only) */}
+          {/* Password */}
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-navy">비밀번호</span>
+            <input
+              type="password"
+              className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-teal"
+              placeholder="비밀번호를 입력하세요"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+
+          {/* Signup-only fields */}
           {mode === "signup" && (
-            <div>
-              <p className="mb-3 text-sm font-medium text-navy">역할 선택</p>
-              <div className="grid grid-cols-2 gap-3">
-                {roleOptions.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    className={`rounded-[22px] border p-4 text-left transition-all ${
-                      selectedRole === r.id
-                        ? "border-teal bg-teal/8 shadow-md"
-                        : "border-line bg-white hover:border-teal/40"
-                    }`}
-                    onClick={() => setSelectedRole(r.id)}
-                  >
-                    <span className="text-2xl">{r.icon}</span>
-                    <p className="mt-2 text-sm font-semibold text-navy">{r.label}</p>
-                    <p className="mt-1 text-xs text-muted">{r.description}</p>
-                  </button>
-                ))}
+            <>
+              {/* Name */}
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-navy">이름</span>
+                <input
+                  className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-teal"
+                  placeholder="이름을 입력하세요"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </label>
+
+              {/* Role selection */}
+              <div>
+                <p className="mb-3 text-sm font-medium text-navy">역할 선택</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {roleOptions.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className={`rounded-[22px] border p-4 text-left transition-all ${
+                        selectedRole === r.id
+                          ? "border-teal bg-teal/8 shadow-md"
+                          : "border-line bg-white hover:border-teal/40"
+                      }`}
+                      onClick={() => setSelectedRole(r.id)}
+                    >
+                      <span className="text-2xl">{r.icon}</span>
+                      <p className="mt-2 text-sm font-semibold text-navy">{r.label}</p>
+                      <p className="mt-1 text-xs text-muted">{r.description}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* Error */}
