@@ -10,17 +10,34 @@
 
 ## Current Product Model
 
-The current `/studio` flow is:
+The `/studio` route is split by role:
 
-1. Student selects a textbook bot by subject and publisher.
-2. Student asks a question and receives a textbook-grounded answer.
-3. The question is accumulated into the integrated question DB.
-4. Teacher uses the same question DB to generate lesson materials and exam drafts.
+- `/studio` — role selection (student or teacher)
+- `/studio/chat` — student-only: textbook chatbot
+- `/studio/analysis` — teacher-only: question DB + textbook range analysis
+- `/studio/generate` — teacher-only: lesson material / exam draft generation
+
+Flow:
+
+1. User selects a role (student or teacher) at `/studio`.
+2. Students go to `/studio/chat`, ask questions, receive textbook-grounded answers.
+3. Questions accumulate in the shared question DB.
+4. Teachers see the question DB at `/studio/analysis` and generate outputs at `/studio/generate`.
 
 ## Important Files
 
-- `src/components/studio-workbench.tsx`
-  - main workspace layout and user flow
+- `src/lib/studio-context.tsx`
+  - shared state provider (role, bot, chat, question DB, teacher outputs)
+- `src/app/studio/layout.tsx`
+  - studio shell with role-aware sidebar and navigation
+- `src/app/studio/page.tsx`
+  - role selection entry point
+- `src/app/studio/chat/page.tsx`
+  - student chatbot page
+- `src/app/studio/analysis/page.tsx`
+  - teacher question analysis page
+- `src/app/studio/generate/page.tsx`
+  - teacher lesson/exam generation page
 - `src/components/studio-ui.tsx`
   - shared presentation components for the studio
 - `src/lib/studio-data.ts`
