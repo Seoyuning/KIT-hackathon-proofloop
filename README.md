@@ -1,110 +1,98 @@
 # ProofLoop
 
-ProofLoop는 코딩 교육 현장을 위한 AI 학습 증거 레이더입니다.
+ProofLoop is an education AI prototype for public education and academy-style classrooms.
 
-학생이 과제를 더 빨리 끝내게 돕는 대신, 교강사가 더 어려운 질문에 답하도록 돕습니다.
+The project currently has two surfaces:
 
-> "이 학생은 AI 도움을 받아 과제를 제출했는데, 정말 이해하고 있는가?"
+- `/` : product positioning and landing page
+- `/studio` : the actual working application for students and teachers
 
-앱은 아래 세 가지 입력을 함께 읽습니다.
+## Current Product Shape
 
-- 과제 설명
-- 학생 제출물 또는 설명
-- AI 대화 흔적
+The active product direction is the `/studio` workspace.
 
-그다음 아래 결과를 생성합니다.
+It models the workflow shown in the recent design iteration:
 
-- 이해 증거 점수
-- 숨은 학습 부채 위험 신호
-- 적응형 구두 확인 질문
-- 교강사 개입 액션
-- 반 단위 코칭 우선순위
+1. Students use a textbook-grounded chatbot by subject and publisher.
+2. The chatbot answers only from the selected textbook scope and returns unit/page evidence.
+3. Student questions are accumulated into an integrated question database.
+4. Teachers use that question database to generate lesson-material drafts and exam drafts.
 
-## 해커톤 적합성
+This makes the student-facing AI and the teacher-facing AI share the same source of instructional signals.
 
-이 대회는 단순 LMS가 아니라 실제 교육 현장의 페인 포인트를 해결하는 AI 솔루션을 요구합니다.
+## `/studio` Features
 
-ProofLoop는 AI 시대의 학습 환경이 새로 만든 문제를 겨냥합니다.
+- Textbook bot selector by school level, subject, and publisher
+- Grounded student chat flow with section/page evidence
+- Integrated question DB that clusters repeated student questions and misconceptions
+- Teacher lesson-kit generator from selected units + question DB
+- Teacher exam-draft generator from selected scope + predicted misconception traps
+- App-style dashboard layout intended for real usage rather than a marketing-only page
 
-- 학생은 AI를 써서 과제를 더 빨리 완성할 수 있습니다.
-- 교강사는 그 결과가 진짜 이해를 반영하는지 보기 더 어려워졌습니다.
-- 운영자는 자신감 하락이나 이탈이 시작된 뒤에야 학습 부채를 발견하게 됩니다.
+## Demo Data Included
 
-그래서 ProofLoop는 실무적이고, 지금 시점에 맞고, 일반적인 튜터나 채점 보조와도 분명히 다릅니다.
+The current seeded workspace includes textbook bots and unit data for:
 
-## 제품 구조
+- High school math
+- Middle school science
+- High school Korean
 
-### 1. 진단 스튜디오
+All of this data currently lives in local source files and is used to simulate the MVP flow.
 
-학생 한 명의 사례를 넣으면 아래를 생성합니다.
+## Project Structure
 
-- 핵심 개념 이해 점수
-- 전이 및 응용 점수
-- 설명과 반성 깊이 점수
-- 독립적 사고 점수
-- 개입 우선순위
+- `src/app/page.tsx`
+  - landing page and product positioning
+- `src/app/studio/page.tsx`
+  - entry route for the actual application workspace
+- `src/components/studio-workbench.tsx`
+  - main app shell and dashboard workflow
+- `src/components/studio-ui.tsx`
+  - reusable studio UI components
+- `src/lib/studio-data.ts`
+  - seeded textbook bots, textbook sections, and initial question clusters
+- `src/lib/studio-generation.ts`
+  - grounded reply generation, question clustering, lesson-kit generation, exam-draft generation
+- `src/app/api/diagnose/route.ts`
+  - legacy diagnosis API from the earlier prototype flow
 
-### 2. 교강사 레이더
-
-완료율이 아니라 개입 우선순위 기준으로 반 전체를 재정렬해 보여줍니다.
-
-### 3. AI 전략 레이어
-
-MVP는 두 가지 실행 경로를 가집니다.
-
-- `데모 안전 모드`: 공개 데모와 무비밀 환경에서도 항상 동작하는 내장 평가기
-- `실시간 AI`: `GEMINI_API_KEY`가 있을 때 Gemini API를 이용해 서술형 진단을 강화하는 경로
-
-## 기술 스택
+## Tech Stack
 
 - Next.js 16
 - React 19
 - TypeScript
 - Tailwind CSS 4
-- 선택형 Gemini 런타임 연동: `src/app/api/diagnose/route.ts`
 
-## 로컬 실행
+## Local Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:3000`을 엽니다.
+Open:
 
-## 환경 변수
+- `http://localhost:3000`
+- `http://localhost:3000/studio`
 
-실시간 AI 진단을 쓰려면 `.env.example`을 `.env.local`로 복사한 뒤 아래 값을 넣으세요.
-
-```bash
-GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-API 키가 없거나 모델 호출이 실패하면 앱은 자동으로 데모 안전 모드로 전환됩니다.
-
-## 배포
-
-가장 간단한 경로는 Vercel입니다.
-
-1. 저장소를 Import 합니다.
-2. 실시간 AI가 필요할 때만 `GEMINI_API_KEY`를 설정합니다.
-3. 배포합니다.
-
-비밀값 없이도 앱이 동작하므로 공개 심사와 GitHub 공개 저장소 운영에 유리합니다.
-
-## 제출 지원 문서
-
-- [제품/기획 문서](./docs/proofloop-design.md)
-- [AI 리포트 최종 초안](./docs/AI_REPORT_DRAFT.md)
-- [90초 데모 스크립트](./docs/DEMO_SCRIPT.md)
-- [제출 체크리스트](./docs/SUBMISSION_CHECKLIST.md)
-
-## 검증
-
-현재 빌드는 아래 검증을 통과합니다.
+## Verification
 
 ```bash
 npm run lint
 npm run build
 ```
+
+Both commands were used during the recent workspace updates.
+
+## Current Limitations
+
+- Textbook grounding is currently simulated with seeded local data, not uploaded PDFs
+- The integrated question DB is currently an in-memory/local-source MVP, not a real database
+- Teacher outputs are generated from deterministic local logic, not a live production AI pipeline
+
+## Recommended Next Steps
+
+- Add textbook PDF upload and parsing flow
+- Persist question clusters in a real database
+- Connect grounded retrieval / LLM generation for textbook answers
+- Add teacher export flows for PPT, worksheet, and exam formats

@@ -26,9 +26,12 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProofLoop | AI 학습 증거 레이더",
+  title: {
+    default: "ProofLoop",
+    template: "%s | ProofLoop",
+  },
   description:
-    "ProofLoop는 AI로 완성한 결과물이 아니라 실제 이해의 증거를 진단하고, 교강사에게 누구를 먼저 개입해야 하는지 알려주는 AI 학습 증거 레이더입니다.",
+    "AI 과제 제출 이후 학생별 약점과 반 전체 점검 우선순위를 빠르게 파악하는 학습 점검 워크벤치입니다.",
 };
 
 export default function RootLayout({
