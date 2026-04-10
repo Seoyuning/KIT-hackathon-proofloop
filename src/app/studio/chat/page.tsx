@@ -2,26 +2,27 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { useStudio } from "@/lib/studio-context";
 import { MessageBubble, SectionHeader } from "@/components/studio-ui";
 
 export default function StudentChatPage() {
   const router = useRouter();
-  const { role, currentBot, chatInput, setChatInput, chatMessages, handleSendQuestion } = useStudio();
+  const { user, isLoading } = useAuth();
+  const { currentBot, chatInput, setChatInput, chatMessages, handleSendQuestion } = useStudio();
 
   useEffect(() => {
-    if (role !== "student") {
-      router.replace("/studio");
-    }
-  }, [role, router]);
+    if (isLoading) return;
+    if (!user) { router.replace("/studio/login"); return; }
+    if (user.role !== "student") { router.replace("/studio/analysis"); }
+  }, [user, isLoading, router]);
 
-  if (role !== "student") return null;
+  if (isLoading || !user || user.role !== "student") return null;
 
   const recentMessages = chatMessages.slice(-12);
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <header className="app-panel rounded-[28px] p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">Grounded Answering</span>
@@ -37,7 +38,6 @@ export default function StudentChatPage() {
         </p>
       </header>
 
-      {/* Chat */}
       <section className="app-panel rounded-[28px] p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <SectionHeader

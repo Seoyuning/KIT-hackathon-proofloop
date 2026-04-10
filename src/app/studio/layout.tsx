@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { textbookBots } from "@/lib/studio-data";
 import { StudioProvider, useStudio } from "@/lib/studio-context";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
 import type { ReactNode } from "react";
 
 function SidebarMetric({ label, value }: { label: string; value: string }) {
@@ -26,9 +27,17 @@ const teacherNav = [
 
 function StudioSidebar() {
   const pathname = usePathname();
-  const { role, setRole, currentBot, handleBotChange, currentQuestionVolume, topClusters, setChatInput } = useStudio();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const { currentBot, handleBotChange, currentQuestionVolume, topClusters, setChatInput } = useStudio();
 
+  const role = user?.role ?? null;
   const navItems = role === "student" ? studentNav : role === "teacher" ? teacherNav : [];
+
+  function handleLogout() {
+    logout();
+    router.push("/studio/login");
+  }
 
   return (
     <aside className="app-sidebar-panel rounded-[28px] p-4 text-white lg:sticky lg:top-3 lg:h-[calc(100vh-24px)] lg:overflow-y-auto lg:p-5 app-scroll">
@@ -36,21 +45,21 @@ function StudioSidebar() {
         <div>
           <p className="eyebrow text-xs text-white/64">ProofLoop Studio</p>
           <h1 className="mt-2 text-xl font-semibold">교과서 AI 워크스페이스</h1>
-          <p className="mt-2 text-sm leading-6 text-white/72">
-            {role === "student"
-              ? "교과서 범위 안에서 질문하고 근거 있는 답변을 받으세요."
-              : role === "teacher"
-                ? "학생 질문 데이터로 수업 자료와 시험지를 만드세요."
-                : "역할을 선택해 주세요."}
-          </p>
+          {user && (
+            <p className="mt-2 text-sm leading-6 text-white/72">
+              {user.name}님 ({user.role === "student" ? "학생" : "교사"})
+            </p>
+          )}
         </div>
-        <Link
-          className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/88 transition-colors hover:bg-white/14"
-          href="/studio"
-          onClick={() => setRole("student")}
-        >
-          역할 변경
-        </Link>
+        {user && (
+          <button
+            className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/88 transition-colors hover:bg-white/14"
+            onClick={handleLogout}
+            type="button"
+          >
+            로그아웃
+          </button>
+        )}
       </div>
 
       {role && (
@@ -154,7 +163,21 @@ function StudioSidebar() {
   );
 }
 
+/** Pages that don't need the sidebar (login, role select) */
+const noSidebarPaths = ["/studio/login", "/studio"];
+
 function StudioShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const showSidebar = !noSidebarPaths.includes(pathname);
+
+  if (!showSidebar) {
+    return (
+      <main className="studio-app px-3 py-3 sm:px-4 lg:px-5">
+        <div className="mx-auto max-w-[1600px]">{children}</div>
+      </main>
+    );
+  }
+
   return (
     <main className="studio-app px-3 py-3 sm:px-4 lg:px-5">
       <div className="mx-auto grid max-w-[1600px] gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -167,8 +190,10 @@ function StudioShell({ children }: { children: ReactNode }) {
 
 export default function StudioLayout({ children }: { children: ReactNode }) {
   return (
-    <StudioProvider>
-      <StudioShell>{children}</StudioShell>
-    </StudioProvider>
+    <AuthProvider>
+      <StudioProvider>
+        <StudioShell>{children}</StudioShell>
+      </StudioProvider>
+    </AuthProvider>
   );
 }

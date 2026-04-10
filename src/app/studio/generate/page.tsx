@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { useStudio, toggleUnit } from "@/lib/studio-context";
-import { ExamQuestionCard, InfoBlock, SectionHeader, SimpleListCard, UnitToggle } from "@/components/studio-ui";
+import { ExamQuestionCard, SectionHeader, SimpleListCard, UnitToggle } from "@/components/studio-ui";
 
 function TeacherModeButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
@@ -20,23 +21,23 @@ function TeacherModeButton({ active, label, onClick }: { active: boolean; label:
 
 export default function TeacherGeneratePage() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const {
-    role, currentBot, teacherMode, setTeacherMode,
+    currentBot, teacherMode, setTeacherMode,
     lessonUnitIds, setLessonUnitIds, lessonFocus, setLessonFocus, lessonMinutes, setLessonMinutes, lessonKit, handleLessonGenerate,
     examUnitIds, setExamUnitIds, examPurpose, setExamPurpose, examQuestionCount, setExamQuestionCount, examDraft, handleExamGenerate,
   } = useStudio();
 
   useEffect(() => {
-    if (role !== "teacher") {
-      router.replace("/studio");
-    }
-  }, [role, router]);
+    if (isLoading) return;
+    if (!user) { router.replace("/studio/login"); return; }
+    if (user.role !== "teacher") { router.replace("/studio/chat"); }
+  }, [user, isLoading, router]);
 
-  if (role !== "teacher") return null;
+  if (isLoading || !user || user.role !== "teacher") return null;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <header className="app-panel rounded-[28px] p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -61,7 +62,6 @@ export default function TeacherGeneratePage() {
         </div>
       </header>
 
-      {/* Lesson mode */}
       {teacherMode === "lesson" ? (
         <div className="space-y-4">
           <section className="app-panel rounded-[28px] p-5 sm:p-6">

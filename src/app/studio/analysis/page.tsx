@@ -2,24 +2,25 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { useStudio } from "@/lib/studio-context";
 import { InfoBlock, SectionHeader } from "@/components/studio-ui";
 
 export default function TeacherAnalysisPage() {
   const router = useRouter();
-  const { role, currentBot, currentClusters, currentQuestionVolume, topClusters } = useStudio();
+  const { user, isLoading } = useAuth();
+  const { currentBot, currentClusters, currentQuestionVolume, topClusters } = useStudio();
 
   useEffect(() => {
-    if (role !== "teacher") {
-      router.replace("/studio");
-    }
-  }, [role, router]);
+    if (isLoading) return;
+    if (!user) { router.replace("/studio/login"); return; }
+    if (user.role !== "teacher") { router.replace("/studio/chat"); }
+  }, [user, isLoading, router]);
 
-  if (role !== "teacher") return null;
+  if (isLoading || !user || user.role !== "teacher") return null;
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <header className="app-panel rounded-[28px] p-5 sm:p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
@@ -51,7 +52,6 @@ export default function TeacherAnalysisPage() {
       </header>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
-        {/* Question DB */}
         <section className="app-panel rounded-[28px] p-5 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <SectionHeader
@@ -90,7 +90,6 @@ export default function TeacherAnalysisPage() {
           </div>
         </section>
 
-        {/* Textbook Range */}
         <section className="app-panel rounded-[28px] p-5 sm:p-6">
           <SectionHeader
             kicker="교과서 범위"

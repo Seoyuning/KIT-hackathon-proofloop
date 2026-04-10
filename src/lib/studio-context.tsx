@@ -12,8 +12,6 @@ import {
 } from "@/lib/studio-generation";
 import type { ChatMessage } from "@/components/studio-ui";
 
-export type UserRole = "student" | "teacher";
-
 function createWelcomeMessage(bot: TextbookBot): ChatMessage {
   return {
     id: `welcome-${bot.id}`,
@@ -44,10 +42,6 @@ export function sortClusters(clusters: QuestionCluster[]) {
 type TeacherMode = "lesson" | "exam";
 
 interface StudioState {
-  /* role */
-  role: UserRole | null;
-  setRole: (role: UserRole) => void;
-
   /* bot */
   currentBot: TextbookBot;
   handleBotChange: (bot: TextbookBot) => void;
@@ -100,7 +94,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const initialLessonUnitIds = getDefaultLessonUnitIds(initialBot);
   const initialExamUnitIds = getDefaultExamUnitIds(initialBot);
 
-  const [role, setRole] = useState<UserRole | null>(null);
   const [selectedBotId, setSelectedBotId] = useState(initialBot.id);
   const [messageSerial, setMessageSerial] = useState(1);
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
@@ -193,7 +186,6 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   return (
     <StudioContext.Provider
       value={{
-        role, setRole,
         currentBot, handleBotChange,
         chatInput, setChatInput, chatMessages, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters,
