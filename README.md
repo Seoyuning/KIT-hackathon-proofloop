@@ -5,7 +5,8 @@ ProofLoop is an education AI prototype for public education and academy-style cl
 The project currently has these surfaces:
 
 - `/` : the main domain entry, permanently redirected to `/studio`
-- `/studio` : role selection (student or teacher)
+- `/studio/login` : email + password login / signup with role selection (student or teacher)
+- `/studio` : auto-redirect based on auth state (login → chat or analysis)
 - `/studio/chat` : student-only textbook chatbot
 - `/studio/analysis` : teacher-only question DB and textbook range analysis
 - `/studio/generate` : teacher-only lesson material and exam draft generation
@@ -27,12 +28,14 @@ This makes the student-facing AI and the teacher-facing AI share the same source
 
 ## `/studio` Features
 
-- Role-based access: students and teachers see separate pages
+- Email + password authentication with role selection at signup
+- Role-based page access: students and teachers see completely separate pages
 - Textbook bot selector by school level, subject, and publisher
 - **Student** (`/studio/chat`): Grounded chat with section/page evidence
 - **Teacher** (`/studio/analysis`): Question DB clusters + textbook range overview
 - **Teacher** (`/studio/generate`): Lesson-kit and exam-draft generation from question data
 - Shared state: student questions automatically feed teacher tools via React Context
+- Sidebar with user info, logout, and role-specific navigation
 
 ## Demo Data Included
 
@@ -50,16 +53,20 @@ All of this data currently lives in local source files and is used to simulate t
   - redirects to `/studio`
 - `src/app/studio/layout.tsx`
   - studio shell with role-aware sidebar and navigation
+- `src/app/studio/login/page.tsx`
+  - login and signup page with email/password and role selection
 - `src/app/studio/page.tsx`
-  - role selection entry point (student or teacher)
+  - auth-based redirect (login → chat or analysis)
 - `src/app/studio/chat/page.tsx`
   - student-only textbook chatbot page
 - `src/app/studio/analysis/page.tsx`
   - teacher-only question DB and textbook range analysis
 - `src/app/studio/generate/page.tsx`
   - teacher-only lesson material and exam draft generation
+- `src/lib/auth-context.tsx`
+  - authentication provider (email/password, role persistence via localStorage)
 - `src/lib/studio-context.tsx`
-  - shared React Context for role, bot, chat, question DB, and teacher state
+  - shared React Context for bot, chat, question DB, and teacher state
 - `src/components/studio-ui.tsx`
   - reusable studio UI components
 - `src/lib/studio-data.ts`
@@ -117,7 +124,8 @@ Both commands were used during the recent workspace updates.
 
 ## Recommended Next Steps
 
-- Add real authentication (OAuth or email/password) to replace client-side role selection
+- Add SNS OAuth login (Kakao, Google) alongside email/password
+- Migrate auth from localStorage to server-side sessions / database
 - Add textbook PDF upload and parsing flow
 - Persist question clusters in a real database
 - Connect grounded retrieval / LLM generation for textbook answers

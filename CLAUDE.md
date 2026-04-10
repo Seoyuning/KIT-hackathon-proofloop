@@ -10,28 +10,34 @@
 
 ## Current Product Model
 
-The `/studio` route is split by role:
+The `/studio` route requires email+password authentication with role-based access:
 
-- `/studio` — role selection (student or teacher)
+- `/studio/login` — login / signup (email, password, name, role selection)
+- `/studio` — auto-redirect based on auth state
 - `/studio/chat` — student-only: textbook chatbot
 - `/studio/analysis` — teacher-only: question DB + textbook range analysis
 - `/studio/generate` — teacher-only: lesson material / exam draft generation
 
 Flow:
 
-1. User selects a role (student or teacher) at `/studio`.
-2. Students go to `/studio/chat`, ask questions, receive textbook-grounded answers.
+1. User signs up with email/password and selects a role (student or teacher).
+2. Students are routed to `/studio/chat`, ask questions, receive textbook-grounded answers.
 3. Questions accumulate in the shared question DB.
-4. Teachers see the question DB at `/studio/analysis` and generate outputs at `/studio/generate`.
+4. Teachers are routed to `/studio/analysis` and generate outputs at `/studio/generate`.
+5. Unauthenticated users are redirected to `/studio/login`.
 
 ## Important Files
 
+- `src/lib/auth-context.tsx`
+  - authentication provider (email/password, role, localStorage MVP)
 - `src/lib/studio-context.tsx`
-  - shared state provider (role, bot, chat, question DB, teacher outputs)
+  - shared state provider (bot, chat, question DB, teacher outputs)
 - `src/app/studio/layout.tsx`
-  - studio shell with role-aware sidebar and navigation
+  - studio shell with auth + role-aware sidebar and navigation
+- `src/app/studio/login/page.tsx`
+  - login and signup page
 - `src/app/studio/page.tsx`
-  - role selection entry point
+  - auth-based redirect entry point
 - `src/app/studio/chat/page.tsx`
   - student chatbot page
 - `src/app/studio/analysis/page.tsx`
