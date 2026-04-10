@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 import Link from "next/link";
+import { isAuthorizedPreviewCookie, PREVIEW_COOKIE_NAME } from "@/lib/landing-preview";
 
 const navigation = [
   { href: "#problem", label: "문제 정의" },
@@ -63,7 +67,22 @@ const workflow = [
   },
 ];
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: "ProofLoop Preview",
+  description: "Private preview landing page for ProofLoop.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export default async function Home() {
+  const previewCookie = (await cookies()).get(PREVIEW_COOKIE_NAME)?.value;
+
+  if (!isAuthorizedPreviewCookie(previewCookie)) {
+    notFound();
+  }
+
   return (
     <main className="px-4 pb-20 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
