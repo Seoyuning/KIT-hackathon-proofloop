@@ -55,7 +55,7 @@ function StudioSidebar() {
         </div>
         {user && (
           <button
-            className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/88 transition-colors hover:bg-white/14"
+            className="whitespace-nowrap rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/88 transition-colors hover:bg-white/14"
             onClick={handleLogout}
             type="button"
           >
@@ -72,7 +72,7 @@ function StudioSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
                   pathname === item.href
                     ? "bg-white text-navy shadow-lg"
                     : "border border-white/10 bg-white/8 text-white/82 hover:bg-white/14"

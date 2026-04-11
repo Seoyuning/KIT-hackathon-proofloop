@@ -79,7 +79,7 @@ export default function StudentChatPage() {
               {currentBot.starterPrompts.slice(0, 2).map((prompt) => (
                 <button
                   key={prompt}
-                  className="rounded-full border border-line bg-surface-strong px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-white"
+                  className="whitespace-nowrap rounded-full border border-line bg-surface-strong px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-white"
                   onClick={() => setChatInput(prompt)}
                   type="button"
                 >
@@ -88,7 +88,7 @@ export default function StudentChatPage() {
               ))}
             </div>
             <button
-              className="inline-flex items-center justify-center rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
               onClick={handleSendQuestion}
               type="button"
             >

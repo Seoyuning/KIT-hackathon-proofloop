@@ -25,8 +25,8 @@ export default function TeacherAnalysisPage() {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">질문 분석</span>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
+              <span className="whitespace-nowrap rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">질문 분석</span>
+              <span className="whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
                 {currentBot.publisher} {currentBot.textbookName}
               </span>
             </div>

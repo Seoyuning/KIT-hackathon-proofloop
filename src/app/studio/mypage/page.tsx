@@ -138,7 +138,7 @@ export default function MyPage() {
           <button
             type="submit"
             disabled={nameSaving || name.trim() === user.name}
-            className="rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
+            className="whitespace-nowrap rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
             {nameSaving ? "저장 중..." : "이름 저장"}
           </button>
@@ -182,7 +182,7 @@ export default function MyPage() {
           <button
             type="submit"
             disabled={pwSaving || !newPassword}
-            className="rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
+            className="whitespace-nowrap rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
             {pwSaving ? "변경 중..." : "비밀번호 변경"}
           </button>
@@ -198,7 +198,7 @@ export default function MyPage() {
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-4 rounded-full border border-line bg-white px-6 py-2.5 text-sm font-semibold text-navy transition-colors hover:border-red hover:text-red"
+          className="mt-4 whitespace-nowrap rounded-full border border-line bg-white px-6 py-2.5 text-sm font-semibold text-navy transition-colors hover:border-red hover:text-red"
         >
           로그아웃
         </button>

@@ -46,7 +46,7 @@ body {
   font-family: var(--font-noto-sans-kr), sans-serif;
   line-height: 1.6;
   word-break: keep-all;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   background-image:
     radial-gradient(circle at top left, rgba(242, 185, 75, 0.36), transparent 22%),
     radial-gradient(circle at top right, rgba(11, 143, 128, 0.18), transparent 26%),

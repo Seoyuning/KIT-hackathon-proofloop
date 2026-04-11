@@ -187,7 +187,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full bg-navy py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full whitespace-nowrap rounded-full bg-navy py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "처리 중..." : mode === "login" ? "로그인" : "가입하기"}
           </button>
