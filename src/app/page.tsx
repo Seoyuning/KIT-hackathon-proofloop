@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Phase = "pre" | "in" | "out";
+type Phase = "pre" | "title" | "tagline" | "end";
 
 export default function Home() {
   const router = useRouter();
@@ -11,24 +11,39 @@ export default function Home() {
 
   useEffect(() => {
     router.prefetch("/studio/login");
-    const fadeIn = requestAnimationFrame(() => setPhase("in"));
-    const fadeOut = setTimeout(() => setPhase("out"), 1800);
-    const redirect = setTimeout(() => router.replace("/studio/login"), 2600);
+
+    const raf = requestAnimationFrame(() => setPhase("title"));
+    const toTagline = setTimeout(() => setPhase("tagline"), 1500);
+    const toEnd = setTimeout(() => setPhase("end"), 3000);
+    const redirect = setTimeout(() => router.replace("/studio/login"), 3700);
+
     return () => {
-      cancelAnimationFrame(fadeIn);
-      clearTimeout(fadeOut);
+      cancelAnimationFrame(raf);
+      clearTimeout(toTagline);
+      clearTimeout(toEnd);
       clearTimeout(redirect);
     };
   }, [router]);
 
   return (
-    <main className="fixed inset-0 flex items-center justify-center overflow-hidden">
-      <h1
-        className="display-title px-6 text-center text-5xl leading-[1.05] text-navy transition-opacity duration-[800ms] ease-out sm:text-7xl lg:text-[5.5rem]"
-        style={{ opacity: phase === "in" ? 1 : 0 }}
-      >
-        ProofLoop
-      </h1>
+    <main className="fixed inset-0 flex items-center justify-center overflow-hidden px-6">
+      <div className="relative flex w-full max-w-4xl items-center justify-center">
+        <h1
+          className="display-title absolute text-center text-5xl leading-[1.05] text-navy transition-opacity duration-[700ms] ease-out sm:text-7xl lg:text-[5.5rem]"
+          style={{ opacity: phase === "title" ? 1 : 0 }}
+        >
+          ProofLoop
+        </h1>
+
+        <p
+          className="display-title absolute text-center text-2xl leading-[1.35] text-navy transition-opacity duration-[700ms] ease-out sm:text-3xl lg:text-4xl"
+          style={{ opacity: phase === "tagline" ? 1 : 0 }}
+        >
+          교과서 범위 안에서 답하는 학생 챗봇,
+          <br />
+          그 질문을 받아 수업을 준비하는 교사 워크벤치.
+        </p>
+      </div>
     </main>
   );
 }
