@@ -15,14 +15,16 @@ The project currently has these surfaces:
 
 The active product direction is the `/studio` workspace.
 
+Positioning: ProofLoop is a personalized learning loop. Each student works with a textbook-grounded AI to surface and close the gaps they personally struggle with, while teachers receive the aggregated view of both per-student weaknesses and the concepts the whole class finds hard.
+
 It models the workflow shown in the recent design iteration:
 
-1. Students use a textbook-grounded chatbot by subject and publisher.
-2. The chatbot answers only from the selected textbook scope and returns unit/page evidence.
-3. Student questions are accumulated into an integrated question database.
-4. Teachers use that question database to generate lesson-material drafts and exam drafts.
+1. Students use a textbook-grounded chatbot by subject and publisher to study at their own pace.
+2. The chatbot answers only from the selected textbook scope, returns unit/page evidence, and helps each student identify their own weak concepts.
+3. Student questions and interactions are accumulated into an integrated question database.
+4. Teachers use that database to see each student's individual weak points and the topics the class is commonly stuck on, and to generate lesson-material drafts and exam drafts aligned to those signals.
 
-This makes the student-facing AI and the teacher-facing AI share the same source of instructional signals.
+Student-facing AI and teacher-facing AI share the same source of instructional signals, so per-student personalization and whole-class insight are two views of one data loop.
 
 ## `/studio` Features
 

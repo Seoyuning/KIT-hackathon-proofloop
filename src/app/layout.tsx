@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s | ProofLoop",
   },
   description:
-    "AI 과제 제출 이후 학생별 약점과 반 전체 점검 우선순위를 빠르게 파악하는 학습 점검 워크벤치입니다.",
+    "학생은 교과서 기반 AI로 자신의 약점을 스스로 파악해 학습하고, 교사는 쌓인 질문 데이터로 학생 개개인의 약점과 반 공통 어려움을 함께 확인합니다.",
 };
 
 export default function RootLayout({
