@@ -112,22 +112,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let mounted = true;
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      if (data.session) {
-        const u = await loadProfile(supabase, data.session);
-        if (mounted) setUser(u);
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (data.session) {
+          const u = await loadProfile(supabase, data.session);
+          if (mounted) setUser(u);
+        }
+      } catch (err) {
+        console.error("[auth] getSession failed", err);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
-      if (mounted) setIsLoading(false);
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session) {
-        setUser(null);
-        return;
+      try {
+        if (!session) {
+          setUser(null);
+          return;
+        }
+        const u = await loadProfile(supabase, session);
+        setUser(u);
+      } catch (err) {
+        console.error("[auth] state change failed", err);
+      } finally {
+        setIsLoading(false);
       }
-      const u = await loadProfile(supabase, session);
-      setUser(u);
     });
 
     return () => {
