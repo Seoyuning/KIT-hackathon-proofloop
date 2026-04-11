@@ -5,6 +5,91 @@ const navigation = [
   { href: "#problem", label: "문제 정의" },
   { href: "#audience", label: "누가 쓰는가" },
   { href: "#product", label: "제품 구조" },
+  { href: "#screens", label: "화면 미리보기" },
+  { href: "#difference", label: "차별점" },
+  { href: "#faq", label: "FAQ" },
+];
+
+const studentScreens = [
+  {
+    tag: "학생 · /studio/chat",
+    title: "교과서 범위 안에서만 답하는 챗봇",
+    copy:
+      "학년·과목·출판사를 고르면 해당 교과서의 단원과 페이지 범위 안에서만 답합니다. 답변 옆에는 항상 단원/페이지 근거가 함께 붙어, 학생이 어디를 다시 펼쳐 읽어야 하는지 알 수 있습니다.",
+    points: [
+      "시드 교과서: 고등학교 수학, 중학교 과학, 고등학교 국어",
+      "답변에 단원·페이지 근거 자동 부착",
+      "질문은 자동으로 통합 질문 DB에 적립",
+    ],
+  },
+  {
+    tag: "교사 · /studio/analysis",
+    title: "반 전체의 질문을 한 화면으로 훑는 분석 뷰",
+    copy:
+      "학생들이 실제로 어디서 막혔는지 단원별 클러스터로 정렬해서 보여줍니다. 개인 상담이 아니라, 이번 수업에서 먼저 다뤄야 할 개념을 고르는 데 최적화된 화면입니다.",
+    points: [
+      "질문이 몰린 단원 / 개념 상위 정렬",
+      "교과서 범위 기반 약점 카테고리 표시",
+      "수업 자료·시험 초안 생성 페이지로 바로 연결",
+    ],
+  },
+  {
+    tag: "교사 · /studio/generate",
+    title: "수업 자료 / 시험 초안을 바로 만드는 생성 뷰",
+    copy:
+      "선택한 교과서 범위와 질문 데이터를 입력으로 받아, 수업 자료 초안과 시험 초안을 즉시 만듭니다. 감이 아니라 학생 데이터에 정렬된 초안이 출발점이 됩니다.",
+    points: [
+      "수업용 학습지·개념 정리 초안",
+      "단원 기반 시험 초안",
+      "편집 가능한 형태로 출력",
+    ],
+  },
+];
+
+const differentiators = [
+  {
+    label: "일반 AI 챗봇",
+    good: false,
+    copy: "범위 제한 없이 어디서든 답해서 학생이 교과서를 벗어나기 쉽고, 교사가 진도를 통제하기 어렵습니다.",
+  },
+  {
+    label: "AI 튜터 서비스",
+    good: false,
+    copy: "학생 한 명의 학습 경험에는 집중하지만, 반 전체의 질문 흐름과 교사 수업 준비는 연결되지 않습니다.",
+  },
+  {
+    label: "교사용 AI 생성기",
+    good: false,
+    copy: "자료와 시험을 빠르게 만들지만, 실제 그 반 학생들이 어디서 막혔는지를 반영하기 어렵습니다.",
+  },
+  {
+    label: "ProofLoop",
+    good: true,
+    copy: "교과서 범위에 고정된 학생 챗봇과 교사 분석·생성 도구가 같은 질문 DB를 공유합니다. 학생이 남긴 질문이 교사 수업 준비의 입력이 됩니다.",
+  },
+];
+
+const faqItems = [
+  {
+    q: "학생은 어떻게 시작하나요?",
+    a: "회원가입 시 학생 역할을 선택하면 바로 /studio/chat 으로 들어가, 자기 교과서에 해당하는 봇을 고르고 질문을 시작하면 됩니다. 별도 설치나 설정은 필요하지 않습니다.",
+  },
+  {
+    q: "교사는 어떤 화면을 사용하나요?",
+    a: "교사는 /studio/analysis 에서 학생들의 질문 클러스터를 먼저 확인하고, /studio/generate 에서 해당 범위의 수업 자료와 시험 초안을 생성합니다. 학생 페이지와는 완전히 분리되어 있습니다.",
+  },
+  {
+    q: "교과서 범위를 어떻게 지키나요?",
+    a: "답변 생성 로직은 교과서 단원/페이지 스키마를 입력으로 받고, 결과에는 항상 근거가 함께 반환됩니다. 범위를 벗어나는 질문에는 범위 안에서 답할 수 있는 부분만 제공합니다.",
+  },
+  {
+    q: "데이터는 어디에 저장되나요?",
+    a: "현재 MVP 단계에서는 학생 질문과 교사 출력이 같은 Context 위에서 공유되며, 인증은 Supabase로 관리합니다. 실제 학교/학원 도입 시에는 별도 DB 연동을 계획하고 있습니다.",
+  },
+  {
+    q: "AI가 교사를 대체하나요?",
+    a: "아닙니다. ProofLoop는 수업 전 5분 안에 어느 개념과 어느 학생을 먼저 볼지 고르는 운영 보조 도구입니다. 코칭과 수업 진행은 여전히 교사가 담당합니다.",
+  },
 ];
 
 const roleCards = [
@@ -259,6 +344,150 @@ export default function Home() {
               >
                 로그인하고 /studio 열기
               </Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="screens" className="paper-panel rounded-[30px] px-5 py-5 sm:px-6">
+          <SectionHeader
+            kicker="화면 미리보기"
+            title="학생용 챗봇, 교사용 분석, 교사용 생성. 세 화면이 같은 교과서 데이터 위에 올라갑니다."
+            copy="ProofLoop는 한 사람을 위한 단일 인터페이스가 아니라, 역할별로 완전히 분리된 세 개의 작업 화면으로 구성됩니다. 각 화면은 공유된 질문 DB를 통해 자연스럽게 이어집니다."
+          />
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            {studentScreens.map((screen) => (
+              <div
+                key={screen.title}
+                className="flex h-full flex-col rounded-[26px] border border-line bg-white/70 p-5"
+              >
+                <span className="eyebrow text-xs text-muted">{screen.tag}</span>
+                <h3 className="mt-3 text-lg font-semibold leading-snug text-navy">
+                  {screen.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-muted">{screen.copy}</p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-navy">
+                  {screen.points.map((point) => (
+                    <li key={point} className="flex gap-2">
+                      <span className="mt-[0.55rem] h-1.5 w-1.5 flex-none rounded-full bg-orange" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="difference" className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="paper-panel rounded-[30px] px-5 py-5 sm:px-6">
+            <SectionHeader
+              kicker="차별점"
+              title="AI 챗봇도, AI 튜터도, AI 생성기도 아닙니다."
+              copy="ProofLoop는 이 셋을 잇는 연결 조직에 가깝습니다. 학생이 남긴 흔적이 교사 준비의 입력이 되도록 데이터 파이프라인을 한 줄로 만들어 둔 것이 핵심입니다."
+            />
+
+            <div className="mt-6 space-y-3 text-sm leading-6 text-muted">
+              <p>
+                대부분의 교육 AI 제품은 학생 또는 교사 중 한쪽만 바라봅니다. 그래서 학생이 어디서 막혔는지는
+                교사에게 잘 전달되지 않고, 교사가 만든 자료도 실제 그 반의 학습 리스크를 반영하기 어렵습니다.
+              </p>
+              <p>
+                ProofLoop는 반대로 <span className="font-semibold text-navy">하나의 교과서 데이터 + 하나의 질문
+                DB</span> 위에 학생 화면과 교사 화면을 올렸습니다. 설계상 두 사용자가 같은 신호를 공유하게 되는
+                구조입니다.
+              </p>
+            </div>
+          </div>
+
+          <div className="paper-panel rounded-[30px] px-5 py-5 sm:px-6">
+            <div className="grid gap-3">
+              {differentiators.map((row) => (
+                <div
+                  key={row.label}
+                  className={`rounded-[22px] border p-4 ${
+                    row.good
+                      ? "border-navy/30 bg-navy text-white"
+                      : "border-line bg-white/65"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold ${
+                        row.good ? "bg-orange text-white" : "bg-line text-muted"
+                      }`}
+                    >
+                      {row.good ? "우리" : "기존"}
+                    </span>
+                    <p
+                      className={`text-sm font-semibold ${
+                        row.good ? "text-white" : "text-navy"
+                      }`}
+                    >
+                      {row.label}
+                    </p>
+                  </div>
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      row.good ? "text-white/80" : "text-muted"
+                    }`}
+                  >
+                    {row.copy}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="faq" className="paper-panel rounded-[30px] px-5 py-5 sm:px-6">
+          <SectionHeader
+            kicker="자주 묻는 질문"
+            title="사용을 시작하기 전에 가장 많이 나오는 질문 다섯 가지."
+            copy="심사와 데모 환경에서 반복적으로 들어온 질문을 중심으로 정리했습니다. 더 깊은 기술/운영 질문은 /studio 내부 화면과 report/ 디렉터리의 일일 로그에서 확인할 수 있습니다."
+          />
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+            {faqItems.map((item) => (
+              <div
+                key={item.q}
+                className="rounded-[24px] border border-line bg-white/65 p-4"
+              >
+                <p className="text-sm font-semibold text-navy">Q. {item.q}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">A. {item.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="paper-panel overflow-hidden rounded-[32px] border border-navy/10 bg-navy px-6 py-8 text-white sm:px-10 sm:py-10">
+          <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr] lg:items-center">
+            <div>
+              <p className="eyebrow text-xs text-white/70">지금 시작하기</p>
+              <h2 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">
+                학생 질문과 교사 준비를
+                <br />
+                같은 화면 위에서 연결해 보세요.
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">
+                이메일과 비밀번호로 바로 가입하고, 학생 또는 교사 역할을 고르면 1분 안에 /studio 에 들어갈 수
+                있습니다. 시드 교과서 데이터가 준비되어 있어, 별도 설정 없이 전체 흐름을 바로 체험할 수 있습니다.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link
+                className="rounded-full bg-orange px-5 py-3 text-center text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+                href="/studio/login"
+              >
+                로그인 / 회원가입
+              </Link>
+              <a
+                className="pill rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+                href="#product"
+              >
+                제품 구조 다시 보기
+              </a>
             </div>
           </div>
         </section>

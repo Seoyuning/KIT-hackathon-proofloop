@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, type UserRole } from "@/lib/auth-context";
 
@@ -12,6 +12,14 @@ const roleOptions: { id: UserRole; label: string; icon: string; description: str
 ];
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signup, login, resendConfirmation, user, isLoading } = useAuth();
