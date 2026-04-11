@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, type UserRole } from "@/lib/auth-context";
 
 type Mode = "login" | "signup";
@@ -13,7 +13,8 @@ const roleOptions: { id: UserRole; label: string; icon: string; description: str
 
 export default function LoginPage() {
   const router = useRouter();
-  const { signup, login } = useAuth();
+  const searchParams = useSearchParams();
+  const { signup, login, resendConfirmation, user, isLoading } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -21,28 +22,61 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleLogin() {
-    const err = login(email, password);
-    if (err) { setError(err); return; }
-    // login sets user in context; read role from stored data
-    const role = selectedRole; // fallback, but login already set user
-    // Re-read from context after login — redirect based on stored role
-    // Since login returns null on success, we need to check localStorage
-    const stored = JSON.parse(localStorage.getItem("proofloop-users") ?? "{}");
-    const found = stored[email.trim().toLowerCase()];
-    router.push(found?.role === "student" ? "/studio/chat" : "/studio/analysis");
+  // Redirect already-logged-in users away from login page.
+  useEffect(() => {
+    if (isLoading || !user) return;
+    router.replace(user.role === "student" ? "/studio/chat" : "/studio/analysis");
+  }, [user, isLoading, router]);
+
+  const callbackError =
+    searchParams.get("error") === "auth_callback"
+      ? "이메일 인증 링크가 만료되었거나 올바르지 않습니다. 다시 시도해 주세요."
+      : "";
+  const displayError = error || callbackError;
+
+  async function handleLogin() {
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    // Auth state listener will populate `user`; redirect handled by effect above.
   }
 
-  function handleSignup() {
-    const err = signup(email, password, name, selectedRole);
-    if (err) { setError(err); return; }
-    router.push(selectedRole === "student" ? "/studio/chat" : "/studio/analysis");
+  async function handleSignup() {
+    setSubmitting(true);
+    const result = await signup(email, password, name, selectedRole);
+    setSubmitting(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    if (result.needsEmailConfirm) {
+      setNotice(
+        `${email.trim()} 주소로 인증 메일을 보냈습니다. 메일함에서 링크를 클릭해 가입을 완료해 주세요.`
+      );
+      return;
+    }
+    // Auto-confirm is on — redirect will happen via effect.
+  }
+
+  async function handleResend() {
+    setError("");
+    setNotice("");
+    const result = await resendConfirmation(email);
+    if (result.error) setError(result.error);
+    else setNotice("인증 메일을 다시 보냈습니다.");
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setNotice("");
     if (mode === "login") handleLogin();
     else handleSignup();
   }
@@ -82,7 +116,7 @@ export default function LoginPage() {
             <input
               type="password"
               className="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-teal"
-              placeholder="비밀번호를 입력하세요"
+              placeholder={mode === "signup" ? "6자 이상" : "비밀번호를 입력하세요"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -91,7 +125,6 @@ export default function LoginPage() {
           {/* Signup-only fields */}
           {mode === "signup" && (
             <>
-              {/* Name */}
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-navy">이름</span>
                 <input
@@ -102,7 +135,6 @@ export default function LoginPage() {
                 />
               </label>
 
-              {/* Role selection */}
               <div>
                 <p className="mb-3 text-sm font-medium text-navy">역할 선택</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -127,32 +159,59 @@ export default function LoginPage() {
             </>
           )}
 
-          {/* Error */}
-          {error && (
-            <p className="rounded-xl bg-red/10 px-4 py-2.5 text-sm text-red">{error}</p>
+          {displayError && (
+            <p className="rounded-xl bg-red/10 px-4 py-2.5 text-sm text-red">{displayError}</p>
           )}
 
-          {/* Submit */}
+          {notice && (
+            <div className="rounded-xl bg-teal/10 px-4 py-3 text-sm text-navy">
+              <p>{notice}</p>
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold text-teal hover:underline"
+                onClick={handleResend}
+              >
+                인증 메일 다시 보내기
+              </button>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-full bg-navy py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
+            disabled={submitting}
+            className="w-full rounded-full bg-navy py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {mode === "login" ? "로그인" : "가입하기"}
+            {submitting ? "처리 중..." : mode === "login" ? "로그인" : "가입하기"}
           </button>
 
-          {/* Toggle mode */}
           <p className="text-center text-sm text-muted">
             {mode === "login" ? (
               <>
                 처음이신가요?{" "}
-                <button type="button" className="font-semibold text-teal hover:underline" onClick={() => { setMode("signup"); setError(""); }}>
+                <button
+                  type="button"
+                  className="font-semibold text-teal hover:underline"
+                  onClick={() => {
+                    setMode("signup");
+                    setError("");
+                    setNotice("");
+                  }}
+                >
                   회원가입
                 </button>
               </>
             ) : (
               <>
                 이미 가입하셨나요?{" "}
-                <button type="button" className="font-semibold text-teal hover:underline" onClick={() => { setMode("login"); setError(""); }}>
+                <button
+                  type="button"
+                  className="font-semibold text-teal hover:underline"
+                  onClick={() => {
+                    setMode("login");
+                    setError("");
+                    setNotice("");
+                  }}
+                >
                   로그인
                 </button>
               </>

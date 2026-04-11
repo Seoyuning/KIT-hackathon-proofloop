@@ -1,70 +1,51 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/client";
 
 export type UserRole = "student" | "teacher";
 
 export interface AuthUser {
+  id: string;
   email: string;
   name: string;
   role: UserRole;
+  createdAt: string;
 }
 
-interface StoredUser {
+interface Profile {
+  id: string;
   email: string;
   name: string;
   role: UserRole;
-  passwordHash: string;
+  created_at: string;
 }
+
+export type AuthResult = { error: string | null; needsEmailConfirm?: boolean };
 
 interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
-  signup: (email: string, password: string, name: string, role: UserRole) => string | null;
-  login: (email: string, password: string) => string | null;
-  logout: () => void;
-}
-
-const STORAGE_KEY = "proofloop-users";
-const SESSION_KEY = "proofloop-session";
-
-/** Simple hash for localStorage MVP — NOT production-grade. */
-function simpleHash(input: string): string {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = ((hash << 5) - hash + input.charCodeAt(i)) | 0;
-  }
-  return hash.toString(36);
-}
-
-function getStoredUsers(): Record<string, StoredUser> {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
-}
-
-function setStoredUsers(users: Record<string, StoredUser>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-}
-
-function getSession(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(SESSION_KEY);
-}
-
-function setSession(email: string | null) {
-  if (email) {
-    localStorage.setItem(SESSION_KEY, email);
-  } else {
-    localStorage.removeItem(SESSION_KEY);
-  }
-}
-
-function toAuthUser(stored: StoredUser): AuthUser {
-  return { email: stored.email, name: stored.name, role: stored.role };
+  signup: (
+    email: string,
+    password: string,
+    name: string,
+    role: UserRole
+  ) => Promise<AuthResult>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  logout: () => Promise<void>;
+  updateName: (name: string) => Promise<AuthResult>;
+  updatePassword: (newPassword: string) => Promise<AuthResult>;
+  resendConfirmation: (email: string) => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -75,75 +56,212 @@ export function useAuth() {
   return ctx;
 }
 
+function toAuthUser(profile: Profile): AuthUser {
+  return {
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    role: profile.role,
+    createdAt: profile.created_at,
+  };
+}
+
+async function loadProfile(
+  supabase: SupabaseClient,
+  session: Session
+): Promise<AuthUser | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, name, role, created_at")
+    .eq("id", session.user.id)
+    .maybeSingle<Profile>();
+
+  if (error || !data) {
+    // Profile trigger may not have fired yet — fall back to metadata.
+    const meta = session.user.user_metadata ?? {};
+    return {
+      id: session.user.id,
+      email: session.user.email ?? "",
+      name: (meta.name as string) ?? "",
+      role: ((meta.role as UserRole) ?? "student") satisfies UserRole,
+      createdAt: session.user.created_at ?? new Date().toISOString(),
+    };
+  }
+
+  return toAuthUser(data);
+}
+
+function mapAuthError(message: string): string {
+  if (/Invalid login credentials/i.test(message))
+    return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  if (/Email not confirmed/i.test(message))
+    return "이메일 인증이 완료되지 않았습니다. 받은 편지함을 확인해 주세요.";
+  if (/User already registered/i.test(message))
+    return "이미 가입된 이메일입니다.";
+  if (/Password should be at least/i.test(message))
+    return "비밀번호는 6자 이상이어야 합니다.";
+  return message;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const sessionEmail = getSession();
-    if (sessionEmail) {
-      const users = getStoredUsers();
-      const found = users[sessionEmail];
-      if (found) {
-        setUser(toAuthUser(found));
-      } else {
-        setSession(null);
+    let mounted = true;
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      if (data.session) {
+        const u = await loadProfile(supabase, data.session);
+        if (mounted) setUser(u);
       }
-    }
-    setIsLoading(false);
-  }, []);
+      if (mounted) setIsLoading(false);
+    })();
 
-  /** Returns error message or null on success. */
-  function signup(email: string, password: string, name: string, role: UserRole): string | null {
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedName = name.trim();
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!session) {
+        setUser(null);
+        return;
+      }
+      const u = await loadProfile(supabase, session);
+      setUser(u);
+    });
 
-    if (!trimmedEmail) return "이메일을 입력해 주세요.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) return "올바른 이메일 형식이 아닙니다.";
-    if (!password) return "비밀번호를 입력해 주세요.";
-    if (password.length < 4) return "비밀번호는 4자 이상이어야 합니다.";
-    if (!trimmedName) return "이름을 입력해 주세요.";
-
-    const users = getStoredUsers();
-    if (users[trimmedEmail]) return "이미 가입된 이메일입니다.";
-
-    const newUser: StoredUser = {
-      email: trimmedEmail,
-      name: trimmedName,
-      role,
-      passwordHash: simpleHash(password),
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
-    users[trimmedEmail] = newUser;
-    setStoredUsers(users);
-    setSession(trimmedEmail);
-    setUser(toAuthUser(newUser));
-    return null;
-  }
+  }, [supabase]);
 
-  /** Returns error message or null on success. */
-  function login(email: string, password: string): string | null {
-    const trimmedEmail = email.trim().toLowerCase();
+  const signup = useCallback(
+    async (
+      email: string,
+      password: string,
+      name: string,
+      role: UserRole
+    ): Promise<AuthResult> => {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedName = name.trim();
 
-    if (!trimmedEmail) return "이메일을 입력해 주세요.";
-    if (!password) return "비밀번호를 입력해 주세요.";
+      if (!trimmedEmail) return { error: "이메일을 입력해 주세요." };
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail))
+        return { error: "올바른 이메일 형식이 아닙니다." };
+      if (!password) return { error: "비밀번호를 입력해 주세요." };
+      if (password.length < 6)
+        return { error: "비밀번호는 6자 이상이어야 합니다." };
+      if (!trimmedName) return { error: "이름을 입력해 주세요." };
 
-    const users = getStoredUsers();
-    const found = users[trimmedEmail];
-    if (!found) return "등록되지 않은 이메일입니다.";
-    if (found.passwordHash !== simpleHash(password)) return "비밀번호가 일치하지 않습니다.";
+      const emailRedirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
 
-    setSession(trimmedEmail);
-    setUser(toAuthUser(found));
-    return null;
-  }
+      const { data, error } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: {
+          data: { name: trimmedName, role },
+          emailRedirectTo,
+        },
+      });
 
-  function logout() {
-    setSession(null);
+      if (error) return { error: mapAuthError(error.message) };
+
+      // If email confirmation is enabled, session will be null until the
+      // user clicks the link in their inbox.
+      const needsEmailConfirm = !data.session;
+      return { error: null, needsEmailConfirm };
+    },
+    [supabase]
+  );
+
+  const login = useCallback(
+    async (email: string, password: string): Promise<AuthResult> => {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!trimmedEmail) return { error: "이메일을 입력해 주세요." };
+      if (!password) return { error: "비밀번호를 입력해 주세요." };
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      });
+      if (error) return { error: mapAuthError(error.message) };
+      return { error: null };
+    },
+    [supabase]
+  );
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
-  }
+  }, [supabase]);
+
+  const updateName = useCallback(
+    async (name: string): Promise<AuthResult> => {
+      const trimmed = name.trim();
+      if (!trimmed) return { error: "이름을 입력해 주세요." };
+      if (!user) return { error: "로그인이 필요합니다." };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ name: trimmed })
+        .eq("id", user.id);
+      if (error) return { error: error.message };
+
+      await supabase.auth.updateUser({ data: { name: trimmed } });
+      setUser({ ...user, name: trimmed });
+      return { error: null };
+    },
+    [supabase, user]
+  );
+
+  const updatePassword = useCallback(
+    async (newPassword: string): Promise<AuthResult> => {
+      if (!newPassword) return { error: "새 비밀번호를 입력해 주세요." };
+      if (newPassword.length < 6)
+        return { error: "비밀번호는 6자 이상이어야 합니다." };
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) return { error: mapAuthError(error.message) };
+      return { error: null };
+    },
+    [supabase]
+  );
+
+  const resendConfirmation = useCallback(
+    async (email: string): Promise<AuthResult> => {
+      const trimmed = email.trim().toLowerCase();
+      if (!trimmed) return { error: "이메일을 입력해 주세요." };
+      const emailRedirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: trimmed,
+        options: { emailRedirectTo },
+      });
+      if (error) return { error: mapAuthError(error.message) };
+      return { error: null };
+    },
+    [supabase]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signup, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        signup,
+        login,
+        logout,
+        updateName,
+        updatePassword,
+        resendConfirmation,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -18,11 +18,13 @@ function SidebarMetric({ label, value }: { label: string; value: string }) {
 
 const studentNav = [
   { href: "/studio/chat", label: "질문하기" },
+  { href: "/studio/mypage", label: "마이페이지" },
 ];
 
 const teacherNav = [
   { href: "/studio/analysis", label: "질문 분석" },
   { href: "/studio/generate", label: "수업 도구" },
+  { href: "/studio/mypage", label: "마이페이지" },
 ];
 
 function StudioSidebar() {
@@ -34,8 +36,8 @@ function StudioSidebar() {
   const role = user?.role ?? null;
   const navItems = role === "student" ? studentNav : role === "teacher" ? teacherNav : [];
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.push("/studio/login");
   }
 
