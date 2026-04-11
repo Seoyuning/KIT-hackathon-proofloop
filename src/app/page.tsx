@@ -36,12 +36,10 @@ export default function Home() {
         </h1>
 
         <p
-          className="display-title absolute text-center text-2xl leading-[1.35] text-navy transition-opacity duration-[700ms] ease-out sm:text-3xl lg:text-4xl"
+          className="display-title absolute text-center text-3xl leading-[1.25] text-navy transition-opacity duration-[700ms] ease-out sm:text-4xl lg:text-5xl"
           style={{ opacity: phase === "tagline" ? 1 : 0 }}
         >
-          교과서 범위 안에서 답하는 학생 챗봇,
-          <br />
-          그 질문을 받아 수업을 준비하는 교사 워크벤치.
+          학생의 질문이, 교사의 수업이 된다.
         </p>
       </div>
     </main>
