@@ -4,14 +4,12 @@ ProofLoop is an education AI prototype for public education and academy-style cl
 
 The project currently has these surfaces:
 
-- `/` : the main domain entry, permanently redirected to `/studio`
+- `/` : public landing / product-positioning page
 - `/studio/login` : email + password login / signup with role selection (student or teacher)
 - `/studio` : auto-redirect based on auth state (login → chat or analysis)
 - `/studio/chat` : student-only textbook chatbot
 - `/studio/analysis` : teacher-only question DB and textbook range analysis
 - `/studio/generate` : teacher-only lesson material and exam draft generation
-- `/preview` : the internal access page for unlocking the hidden landing preview
-- `/preview/landing` : the hidden landing page, visible only after preview verification
 
 ## Current Product Shape
 
@@ -50,7 +48,7 @@ All of this data currently lives in local source files and is used to simulate t
 ## Project Structure
 
 - `src/app/page.tsx`
-  - redirects to `/studio`
+  - public landing page (product positioning, CTAs to `/studio/login`)
 - `src/app/studio/layout.tsx`
   - studio shell with role-aware sidebar and navigation
 - `src/app/studio/login/page.tsx`
@@ -83,16 +81,6 @@ All of this data currently lives in local source files and is used to simulate t
 - TypeScript
 - Tailwind CSS 4
 
-## Private Root Preview
-
-The hidden landing page is intentionally kept off the main domain.
-
-- Public users can enter from `/`, which redirects to `/studio`
-- The hidden landing now lives at `/preview/landing`
-- Configure `LANDING_PREVIEW_KEY` in your environment
-- Visit `/preview`, submit the key, and the app will set a secure preview cookie for `/preview/landing`
-- Visit `/api/preview?logout=1` to clear the preview cookie
-
 ## Local Development
 
 ```bash
@@ -102,10 +90,9 @@ npm run dev
 
 Open:
 
-- `http://localhost:3000` -> redirects to `/studio`
+- `http://localhost:3000` -> public landing page
+- `http://localhost:3000/studio/login`
 - `http://localhost:3000/studio`
-- `http://localhost:3000/preview`
-- `http://localhost:3000/preview/landing` after the preview cookie is unlocked
 
 ## Verification
 
