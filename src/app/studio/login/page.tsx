@@ -59,8 +59,9 @@ function LoginForm() {
         setError(data.error);
         return;
       }
-      // Server set session cookies — full reload to pick them up
-      window.location.href = "/studio";
+      // Go directly to the right page based on role
+      const dest = data.user?.role === "teacher" ? "/studio/analysis" : "/studio/chat";
+      window.location.href = dest;
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -93,8 +94,8 @@ function LoginForm() {
         );
         return;
       }
-      // Auto-confirm — server set cookies, reload
-      window.location.href = "/studio";
+      // Auto-confirm — go directly based on role
+      window.location.href = selectedRole === "teacher" ? "/studio/analysis" : "/studio/chat";
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
