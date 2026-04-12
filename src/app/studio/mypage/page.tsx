@@ -67,9 +67,10 @@ export default function MyPage() {
     setPwMessage({ type: "ok", text: "비밀번호가 변경되었습니다." });
   }
 
-  async function handleLogout() {
-    await logout();
-    router.replace("/studio/login");
+  function handleLogout() {
+    logout().finally(() => {
+      window.location.href = "/studio/login";
+    });
   }
 
   const roleLabel = user.role === "student" ? "학생" : "교사";

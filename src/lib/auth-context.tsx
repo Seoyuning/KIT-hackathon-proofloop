@@ -215,8 +215,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("[auth] signOut failed", err);
+    } finally {
+      setUser(null);
+    }
   }, [supabase]);
 
   const updateName = useCallback(

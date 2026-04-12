@@ -57,21 +57,25 @@ export default function TeacherAnalysisPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <div className="rounded-[22px] border border-line bg-white/72 p-4">
-              <p className="text-xs font-semibold tracking-[0.08em] text-muted">누적 질문</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.totalQuestions ?? currentQuestionVolume}회</p>
+            <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+              <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-teal/8" />
+              <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">누적 질문</p>
+              <p className="relative mt-3 text-2xl font-bold tabular-nums tracking-tight text-navy">{dashboard?.totalQuestions ?? currentQuestionVolume}<span className="ml-0.5 text-sm font-semibold text-muted">회</span></p>
             </div>
-            <div className="rounded-[22px] border border-line bg-white/72 p-4">
-              <p className="text-xs font-semibold tracking-[0.08em] text-muted">참여 학생</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.totalStudents ?? 0}명</p>
+            <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+              <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-amber/10" />
+              <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">참여 학생</p>
+              <p className="relative mt-3 text-2xl font-bold tabular-nums tracking-tight text-navy">{dashboard?.totalStudents ?? 0}<span className="ml-0.5 text-sm font-semibold text-muted">명</span></p>
             </div>
-            <div className="rounded-[22px] border border-line bg-white/72 p-4">
-              <p className="text-xs font-semibold tracking-[0.08em] text-muted">상위 오개념</p>
-              <p className="mt-2 text-sm font-semibold text-navy leading-5">{dashboard?.topMisconception ?? topClusters[0]?.misconception ?? "없음"}</p>
+            <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+              <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-orange/8" />
+              <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">상위 오개념</p>
+              <p className="relative mt-3 text-sm font-bold leading-5 text-navy">{dashboard?.topMisconception ?? topClusters[0]?.misconception ?? "없음"}</p>
             </div>
-            <div className="rounded-[22px] border border-line bg-white/72 p-4">
-              <p className="text-xs font-semibold tracking-[0.08em] text-muted">평균 이해도</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.avgUnderstanding ? `${dashboard.avgUnderstanding}/5` : "데이터 없음"}</p>
+            <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
+              <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-navy/6" />
+              <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">평균 이해도</p>
+              <p className="relative mt-3 text-2xl font-bold tabular-nums tracking-tight text-navy">{dashboard?.avgUnderstanding ? <>{dashboard.avgUnderstanding}<span className="ml-0.5 text-sm font-semibold text-muted">/5</span></> : <span className="text-sm font-semibold text-muted">데이터 없음</span>}</p>
             </div>
           </div>
         </div>

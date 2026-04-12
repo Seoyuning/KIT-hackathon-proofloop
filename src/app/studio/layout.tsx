@@ -185,9 +185,10 @@ function StudioSidebar() {
   const role = user?.role ?? null;
   const navItems = role === "student" ? studentNav : role === "teacher" ? teacherNav : [];
 
-  async function handleLogout() {
-    await logout();
-    router.push("/studio/login");
+  function handleLogout() {
+    logout().finally(() => {
+      window.location.href = "/studio/login";
+    });
   }
 
   return (

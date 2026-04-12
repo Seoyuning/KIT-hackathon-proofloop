@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Noto_Serif_KR } from "next/font/google";
 import "./globals.css";
-
-const notoSansKr = Noto_Sans_KR({
-  variable: "--font-noto-sans-kr",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -42,8 +36,15 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSansKr.variable} ${fraunces.variable} ${notoSerifKr.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${notoSerifKr.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
+      <head>
+        <link
+          rel="stylesheet"
+          crossOrigin="anonymous"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

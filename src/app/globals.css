@@ -27,7 +27,7 @@
   --color-amber: var(--amber);
   --color-red: var(--red);
   --color-navy: var(--navy);
-  --font-sans: var(--font-noto-sans-kr);
+  --font-sans: "Pretendard Variable", Pretendard;
   --font-mono: var(--font-ibm-plex-mono);
   --font-display: var(--font-noto-serif-kr);
 }
@@ -43,7 +43,7 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-noto-sans-kr), sans-serif;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   line-height: 1.6;
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -98,7 +98,7 @@ textarea {
 }
 
 .eyebrow {
-  font-family: var(--font-noto-sans-kr), sans-serif;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: none;
