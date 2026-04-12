@@ -47,30 +47,40 @@ function LoginForm() {
 
   async function handleLogin() {
     setSubmitting(true);
-    const result = await login(email, password);
-    setSubmitting(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const result = await login(email, password);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      // Auth state listener will populate `user`; redirect handled by effect above.
+    } catch {
+      setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSubmitting(false);
     }
-    // Auth state listener will populate `user`; redirect handled by effect above.
   }
 
   async function handleSignup() {
     setSubmitting(true);
-    const result = await signup(email, password, name, selectedRole);
-    setSubmitting(false);
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const result = await signup(email, password, name, selectedRole);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.needsEmailConfirm) {
+        setNotice(
+          `${email.trim()} 주소로 인증 메일을 보냈습니다. 메일함에서 링크를 클릭해 가입을 완료해 주세요.`
+        );
+        return;
+      }
+      // Auto-confirm is on — redirect will happen via effect.
+    } catch {
+      setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSubmitting(false);
     }
-    if (result.needsEmailConfirm) {
-      setNotice(
-        `${email.trim()} 주소로 인증 메일을 보냈습니다. 메일함에서 링크를 클릭해 가입을 완료해 주세요.`
-      );
-      return;
-    }
-    // Auto-confirm is on — redirect will happen via effect.
   }
 
   async function handleResend() {
