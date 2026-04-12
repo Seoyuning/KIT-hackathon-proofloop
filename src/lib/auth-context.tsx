@@ -108,6 +108,15 @@ function mapAuthError(message: string): string {
   return message;
 }
 
+function clearAuthCookies() {
+  document.cookie.split(";").forEach((c) => {
+    const name = c.trim().split("=")[0];
+    if (name.startsWith("sb-")) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    }
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -118,14 +127,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        // Race getSession against a 12s timeout — if it hangs (stale cookie),
+        // clear cookies and proceed as logged-out instead of blocking forever.
+        const result = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 12000)),
+        ]);
+
         if (!mounted) return;
-        if (data.session) {
-          const u = await loadProfile(supabase, data.session);
+
+        if (result && "data" in result && result.data.session) {
+          const u = await loadProfile(supabase, result.data.session);
           if (mounted) setUser(u);
+        } else if (!result) {
+          // Timeout — stale cookie is blocking. Clear it.
+          console.warn("[auth] getSession timed out — clearing stale cookies");
+          clearAuthCookies();
         }
       } catch (err) {
         console.error("[auth] getSession failed", err);
+        clearAuthCookies();
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -226,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("[auth] signOut failed", err);
     } finally {
       setUser(null);
+      clearAuthCookies();
     }
   }, [supabase]);
 
