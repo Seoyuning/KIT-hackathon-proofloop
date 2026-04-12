@@ -47,13 +47,20 @@ function LoginForm() {
 
   async function handleLogin() {
     setSubmitting(true);
+    setError("");
     try {
-      const result = await login(email, password);
-      if (result.error) {
-        setError(result.error);
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
         return;
       }
-      // Auth state listener will populate `user`; redirect handled by effect above.
+      // Server set session cookies — full reload to pick them up
+      window.location.href = "/studio";
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
@@ -63,19 +70,31 @@ function LoginForm() {
 
   async function handleSignup() {
     setSubmitting(true);
+    setError("");
     try {
-      const result = await signup(email, password, name, selectedRole);
-      if (result.error) {
-        setError(result.error);
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          name: name.trim(),
+          role: selectedRole,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
         return;
       }
-      if (result.needsEmailConfirm) {
+      if (data.needsEmailConfirm) {
         setNotice(
           `${email.trim()} 주소로 인증 메일을 보냈습니다. 메일함에서 링크를 클릭해 가입을 완료해 주세요.`
         );
         return;
       }
-      // Auto-confirm is on — redirect will happen via effect.
+      // Auto-confirm — server set cookies, reload
+      window.location.href = "/studio";
     } catch {
       setError("서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
