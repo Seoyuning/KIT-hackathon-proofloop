@@ -150,9 +150,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Keepalive: ping Supabase every 4 minutes to prevent DB sleep
+    const keepalive = setInterval(() => {
+      fetch("/api/keepalive").catch(() => {});
+    }, 4 * 60 * 1000);
+
+    // Also fire once immediately on mount to warm up the DB
+    fetch("/api/keepalive").catch(() => {});
+
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
+      clearInterval(keepalive);
     };
   }, [supabase]);
 
