@@ -7,6 +7,7 @@ export type ChatMessage = {
   evidence?: GroundedEvidence[];
   followUp?: string;
   unitLabel?: string;
+  understanding?: number | null;
 };
 
 export function SectionHeader({
@@ -97,9 +98,32 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         </div>
       ) : null}
 
+      {message.understanding && message.understanding > 0 ? (
+        <div className="mt-4 rounded-[20px] border border-line bg-surface-strong p-3">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold text-muted">이해도</p>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <div
+                  key={level}
+                  className={`h-2 w-6 rounded-full ${
+                    level <= message.understanding!
+                      ? message.understanding! >= 4 ? "bg-teal" : message.understanding! >= 3 ? "bg-orange" : "bg-red-400"
+                      : "bg-gray-200"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted">
+              {message.understanding === 1 ? "매우 부족" : message.understanding === 2 ? "부족" : message.understanding === 3 ? "보통" : message.understanding === 4 ? "양호" : "우수"}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       {message.followUp ? (
         <div className="mt-4 rounded-[20px] border border-teal/16 bg-teal/7 p-3">
-          <p className="text-sm font-semibold text-navy">이어서 물어볼 질문</p>
+          <p className="text-sm font-semibold text-navy">이어서 생각해 볼 질문</p>
           <p className="mt-2 text-sm leading-6 text-muted">{message.followUp}</p>
         </div>
       ) : null}

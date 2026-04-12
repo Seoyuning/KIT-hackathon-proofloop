@@ -8,11 +8,26 @@ import { InfoBlock, SectionHeader } from "@/components/studio-ui";
 
 type AnalysisTab = "class" | "student";
 
+interface DashboardData {
+  totalQuestions: number;
+  totalStudents: number;
+  topMisconception: string;
+  avgUnderstanding: number;
+  misconceptionRanking: Array<{ misconception: string; count: number }>;
+}
+
 export default function TeacherAnalysisPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { currentBot, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses } = useStudio();
   const [tab, setTab] = useState<AnalysisTab>("class");
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard").then((r) => r.json()).then((d) => {
+      if (!d.error) setDashboard(d);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -41,18 +56,22 @@ export default function TeacherAnalysisPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             <div className="rounded-[22px] border border-line bg-white/72 p-4">
               <p className="text-xs font-semibold tracking-[0.08em] text-muted">누적 질문</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{currentQuestionVolume}회</p>
+              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.totalQuestions ?? currentQuestionVolume}회</p>
+            </div>
+            <div className="rounded-[22px] border border-line bg-white/72 p-4">
+              <p className="text-xs font-semibold tracking-[0.08em] text-muted">참여 학생</p>
+              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.totalStudents ?? 0}명</p>
             </div>
             <div className="rounded-[22px] border border-line bg-white/72 p-4">
               <p className="text-xs font-semibold tracking-[0.08em] text-muted">상위 오개념</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{topClusters[0]?.misconception ?? "없음"}</p>
+              <p className="mt-2 text-sm font-semibold text-navy leading-5">{dashboard?.topMisconception ?? topClusters[0]?.misconception ?? "없음"}</p>
             </div>
             <div className="rounded-[22px] border border-line bg-white/72 p-4">
-              <p className="text-xs font-semibold tracking-[0.08em] text-muted">트래킹 학생</p>
-              <p className="mt-2 text-lg font-semibold text-navy">{currentStudentWeaknesses.length}명</p>
+              <p className="text-xs font-semibold tracking-[0.08em] text-muted">평균 이해도</p>
+              <p className="mt-2 text-lg font-semibold text-navy">{dashboard?.avgUnderstanding ? `${dashboard.avgUnderstanding}/5` : "데이터 없음"}</p>
             </div>
           </div>
         </div>

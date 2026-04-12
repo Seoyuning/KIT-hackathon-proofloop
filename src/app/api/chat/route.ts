@@ -42,24 +42,38 @@ function buildSystemPrompt(body: ChatRequestBody): string {
     )
     .join("\n\n");
 
-  return `당신은 ${botMeta.grade} ${botMeta.subject} 교과서 학습 챗봇입니다.
+  return `당신은 ${botMeta.grade} ${botMeta.subject} 교과서 학습 챗봇이자 학습 코치입니다.
 교과서: ${botMeta.publisher} ${botMeta.textbookName}
 
 ## 핵심 규칙
 1. 반드시 아래 교과서 범위 안에서만 답하세요. 범위를 벗어나는 질문에는 "이 교과서 범위에서는 다루지 않는 내용입니다"라고 답하세요.
 2. 답변에는 반드시 관련 단원명과 쪽수를 근거로 포함하세요. 예: "(이차함수의 그래프와 축, 42-47쪽)"
 3. 학생이 가질 수 있는 오개념을 미리 짚어주고 올바른 이해로 안내하세요.
-4. 답변 마지막에 학생이 이어서 생각해볼 수 있는 후속 질문 1개를 제안하세요. "[후속 질문]" 태그로 시작하세요.
-5. 한국어로 답하세요. 친절하지만 간결하게, 교과서 근거에 충실하게 답하세요.
+4. 한국어로 답하세요. 친절하지만 간결하게, 교과서 근거에 충실하게 답하세요.
+
+## 과제 대행 감지 & 학습 유도
+- 학생이 "이 문제 풀어줘", "과제 해줘", "답 알려줘" 등 **답을 직접 요구**하면 바로 답을 주지 마세요.
+- 대신 "스스로 풀 수 있도록 도와줄게요"라고 하고, 핵심 개념을 설명한 뒤 **서술형 확인 질문**을 1개 내세요.
+- 서술형 질문은 찍어서 맞출 수 없는 형태여야 합니다. 예: "~를 자신의 말로 설명해 보세요", "~가 왜 그런지 이유를 써 보세요".
+- 학생이 서술형 질문에 답하면 그 답변을 분석해 이해 수준을 평가하세요.
+
+## 이해도 평가
+매 답변에서 학생의 이해 수준을 아래 5단계로 판단하세요:
+- 1단계(매우 부족): 개념을 전혀 모르거나 완전히 틀린 이해
+- 2단계(부족): 개념의 일부만 알고 핵심을 놓침
+- 3단계(보통): 기본 개념은 알지만 응용이나 연결이 약함
+- 4단계(양호): 개념을 정확히 이해하고 간단한 응용 가능
+- 5단계(우수): 개념을 자기 말로 설명하고 다른 개념과 연결 가능
 
 ## 교과서 단원 데이터
 
 ${sectionBlock}
 
 ## 답변 형식
-답변 본문을 먼저 쓰고, 맨 마지막 줄에 다음 형식으로 근거를 적어주세요:
+답변 본문을 먼저 쓰고, 맨 마지막에 다음 태그들을 각각 한 줄에 적어주세요:
 [근거] 단원명 / 쪽수
-[후속 질문] 이어서 생각해볼 질문`;
+[이해도] 1~5 (숫자만)
+[후속 질문] 이어서 생각해볼 서술형 질문`;
 }
 
 export async function POST(request: Request) {
@@ -129,15 +143,18 @@ export async function POST(request: Request) {
       data?.candidates?.[0]?.content?.parts?.[0]?.text ??
       "답변을 생성하지 못했습니다.";
 
-    // Parse evidence and follow-up from the response
+    // Parse evidence, understanding level, and follow-up from the response
     const lines = text.split("\n");
     let mainAnswer = "";
     let evidenceStr = "";
     let followUp = "";
+    let understanding = 0;
 
     for (const line of lines) {
       if (line.startsWith("[근거]")) {
         evidenceStr = line.replace("[근거]", "").trim();
+      } else if (line.startsWith("[이해도]")) {
+        understanding = parseInt(line.replace("[이해도]", "").trim(), 10) || 0;
       } else if (line.startsWith("[후속 질문]")) {
         followUp = line.replace("[후속 질문]", "").trim();
       } else {
@@ -172,6 +189,7 @@ export async function POST(request: Request) {
             question: body.question,
             section_title: sectionTitle,
             misconception,
+            understanding_level: understanding || null,
           });
         }
       } catch (e) {
@@ -183,6 +201,7 @@ export async function POST(request: Request) {
       answer: mainAnswer.trim(),
       evidence: evidenceStr,
       followUp: followUp,
+      understanding: understanding || null,
     });
   } catch (err) {
     console.error("[chat] fetch failed:", err);

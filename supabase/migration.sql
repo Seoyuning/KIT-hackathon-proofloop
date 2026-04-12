@@ -29,6 +29,7 @@ create table if not exists student_questions (
   question text not null,
   section_title text,
   misconception text,
+  understanding_level int,
   created_at timestamptz default now()
 );
 

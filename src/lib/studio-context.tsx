@@ -230,6 +230,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
               text: data.answer,
               evidence: evidence.length > 0 ? evidence : undefined,
               followUp: data.followUp || undefined,
+              understanding: data.understanding || null,
             },
           ]);
 

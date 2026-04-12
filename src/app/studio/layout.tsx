@@ -240,7 +240,7 @@ function StudioSidebar() {
             <div className="mt-3 grid gap-3">
               <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
               <SidebarMetric label="질문 볼륨" value={`${currentQuestionVolume}건`} />
-              <SidebarMetric label="트래킹 학생" value={`${currentStudentWeaknesses.length}명`} />
+              <SidebarMetric label="참여 학생" value={`${currentStudentWeaknesses.length}명`} />
             </div>
           </div>
 
