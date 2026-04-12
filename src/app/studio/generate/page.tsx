@@ -1,10 +1,79 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useStudio, toggleUnit } from "@/lib/studio-context";
 import { ExamQuestionCard, SectionHeader, SimpleListCard, UnitToggle } from "@/components/studio-ui";
+import type { LessonKit, ExamDraft } from "@/lib/studio-generation";
+
+function formatLessonText(kit: LessonKit): string {
+  let text = `${kit.title}\n${kit.summary}\n\n`;
+  for (const slide of kit.slideOutline) {
+    text += `${slide.title}\n`;
+    for (const b of slide.bullets) text += `  - ${b}\n`;
+    text += "\n";
+  }
+  text += "수업 중 확인 질문:\n";
+  for (const q of kit.checkQuestions) text += `  - ${q}\n`;
+  text += "\n교사용 메모:\n";
+  for (const m of kit.teacherMemo) text += `  - ${m}\n`;
+  return text;
+}
+
+function formatExamText(draft: ExamDraft): string {
+  let text = `${draft.title}\n${draft.summary}\n\n`;
+  text += `예상 함정: ${draft.predictedTraps.join(", ")}\n\n`;
+  for (const q of draft.questions) {
+    text += `문항 ${q.number}. ${q.stem}\n`;
+    const labels = ["A", "B", "C", "D"];
+    q.options.forEach((opt, i) => { text += `  ${labels[i]}. ${opt}\n`; });
+    text += `  정답: ${q.answer}\n  근거: ${q.rationale}\n  출처: ${q.source}\n\n`;
+  }
+  text += "출제 후 활용 메모:\n";
+  for (const n of draft.reviewNotes) text += `  - ${n}\n`;
+  return text;
+}
+
+function ExportButtons({ text, filename }: { text: string; filename: string }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleDownload() {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold text-navy transition-colors hover:bg-surface-strong"
+      >
+        {copied ? "복사됨!" : "클립보드 복사"}
+      </button>
+      <button
+        type="button"
+        onClick={handleDownload}
+        className="rounded-full bg-navy px-4 py-2 text-xs font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
+      >
+        파일 다운로드
+      </button>
+    </div>
+  );
+}
 
 function TeacherModeButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
@@ -139,6 +208,8 @@ export default function TeacherGeneratePage() {
               <SimpleListCard items={lessonKit.checkQuestions} title="수업 중 확인 질문" />
               <SimpleListCard items={lessonKit.teacherMemo} title="교사용 메모" />
             </div>
+
+            <ExportButtons text={formatLessonText(lessonKit)} filename={`${lessonKit.title}.txt`} />
           </section>
         </div>
       ) : (
@@ -214,6 +285,8 @@ export default function TeacherGeneratePage() {
             </div>
 
             <SimpleListCard items={examDraft.reviewNotes} title="출제 후 활용 메모" />
+
+            <ExportButtons text={formatExamText(examDraft)} filename={`${examDraft.title}.txt`} />
           </section>
         </div>
       )}

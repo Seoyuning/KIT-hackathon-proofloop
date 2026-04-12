@@ -453,6 +453,12 @@ const noSidebarPaths = ["/studio/login", "/studio"];
 function StudioShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const showSidebar = !noSidebarPaths.includes(pathname);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   if (!showSidebar) {
     return (
@@ -464,8 +470,21 @@ function StudioShell({ children }: { children: ReactNode }) {
 
   return (
     <main className="studio-app px-3 py-3 sm:px-4 lg:px-5">
+      {/* Mobile hamburger button */}
+      <button
+        type="button"
+        className="mb-3 flex items-center gap-2 rounded-full bg-navy px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 lg:hidden"
+        onClick={() => setMobileOpen(!mobileOpen)}
+      >
+        <span className="text-lg">{mobileOpen ? "✕" : "☰"}</span>
+        {mobileOpen ? "메뉴 닫기" : "메뉴"}
+      </button>
+
       <div className="mx-auto grid max-w-[1600px] gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <StudioSidebar />
+        {/* Sidebar: hidden on mobile unless toggled */}
+        <div className={`${mobileOpen ? "block" : "hidden"} lg:block`}>
+          <StudioSidebar />
+        </div>
         <div className="min-w-0">{children}</div>
       </div>
     </main>
