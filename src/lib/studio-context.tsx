@@ -48,6 +48,10 @@ interface StudioState {
   handleBotChange: (bot: TextbookBot) => void;
   addCustomBot: (bot: TextbookBot) => void;
 
+  /* class */
+  activeClassId: string | null;
+  setActiveClassId: (id: string | null) => void;
+
   /* chat */
   chatInput: string;
   setChatInput: (v: string) => void;
@@ -103,6 +107,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [selectedBotId, setSelectedBotId] = useState(initialBot.id);
   const [messageSerial, setMessageSerial] = useState(1);
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
+  const [activeClassId, setActiveClassId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([createWelcomeMessage(initialBot)]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -180,6 +185,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({
         question,
         botId: currentBot.id,
+        classId: activeClassId,
         sections: currentBot.sections.map((s) => ({
           title: s.title,
           pages: s.pages,
@@ -262,7 +268,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   return (
     <StudioContext.Provider
       value={{
-        allBots, currentBot, handleBotChange, addCustomBot,
+        allBots, currentBot, handleBotChange, addCustomBot, activeClassId, setActiveClassId,
         chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,

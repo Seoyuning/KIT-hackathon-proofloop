@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { textbookBots, type TextbookBot } from "@/lib/studio-data";
 import { StudioProvider, useStudio } from "@/lib/studio-context";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
@@ -22,9 +22,86 @@ const studentNav = [
   { href: "/studio/mypage", label: "마이페이지" },
 ];
 
+function JoinClassWidget() {
+  const [code, setCode] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    fetch("/api/classes").then((r) => r.json()).then((d) => {
+      setJoinedClasses(d.classes?.map((c: any) => ({ id: c.id, name: c.name })) ?? []);
+    }).catch(() => {});
+  }, []);
+
+  async function handleJoin() {
+    if (!code.trim()) return;
+    setJoining(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/classes/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteCode: code }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setMessage({ type: "error", text: data.error });
+      } else {
+        setMessage({ type: "ok", text: `"${data.class.name}" 반에 참여했습니다!` });
+        setJoinedClasses((c) => [...c, { id: data.class.id, name: data.class.name }]);
+        setCode("");
+      }
+    } catch {
+      setMessage({ type: "error", text: "서버에 연결할 수 없습니다." });
+    } finally {
+      setJoining(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+      <p className="text-sm font-semibold">내 반</p>
+      {joinedClasses.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {joinedClasses.map((c) => (
+            <div key={c.id} className="rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-xs text-white/82">
+              {c.name}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="mt-3">
+        <input
+          className="w-full rounded-xl border border-white/12 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-teal"
+          placeholder="초대 코드 입력"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          maxLength={6}
+          onKeyDown={(e) => { if (e.key === "Enter") handleJoin(); }}
+        />
+        <button
+          className="mt-2 w-full rounded-full bg-teal px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal/80 disabled:opacity-60"
+          onClick={handleJoin}
+          disabled={joining || !code.trim()}
+          type="button"
+        >
+          {joining ? "참여 중..." : "반 참여하기"}
+        </button>
+      </div>
+      {message && (
+        <p className={`mt-2 text-xs ${message.type === "ok" ? "text-teal" : "text-orange"}`}>
+          {message.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 const teacherNav = [
   { href: "/studio/analysis", label: "질문 분석" },
   { href: "/studio/generate", label: "수업 도구" },
+  { href: "/studio/classes", label: "반 관리" },
   { href: "/studio/mypage", label: "마이페이지" },
 ];
 
@@ -202,6 +279,9 @@ function StudioSidebar() {
               ))}
             </div>
           </div>
+
+          {/* Student: join class */}
+          {role === "student" && <JoinClassWidget />}
 
           {/* Student: starter prompts */}
           {role === "student" && (

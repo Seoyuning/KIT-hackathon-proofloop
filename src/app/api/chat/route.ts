@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 interface ChatRequestBody {
   question: string;
   botId: string;
+  classId?: string;
   /** Textbook sections for grounding */
   sections: Array<{
     title: string;
@@ -140,6 +142,40 @@ export async function POST(request: Request) {
         followUp = line.replace("[후속 질문]", "").trim();
       } else {
         mainAnswer += line + "\n";
+      }
+    }
+
+    // Save question to DB if student is in a class
+    if (body.classId) {
+      try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Find which section the question relates to
+          const evidenceParts = evidenceStr.split("/").map((s: string) => s.trim());
+          const sectionTitle = evidenceParts[0] || null;
+
+          // Find misconception from the matched section
+          let misconception: string | null = null;
+          if (sectionTitle) {
+            const matchedSection = body.sections.find((s) =>
+              sectionTitle.includes(s.title) || s.title.includes(sectionTitle)
+            );
+            if (matchedSection) {
+              misconception = matchedSection.misconceptionTags[0] ?? null;
+            }
+          }
+
+          await supabase.from("student_questions").insert({
+            class_id: body.classId,
+            student_id: user.id,
+            question: body.question,
+            section_title: sectionTitle,
+            misconception,
+          });
+        }
+      } catch (e) {
+        console.error("[chat] failed to save question:", e);
       }
     }
 
