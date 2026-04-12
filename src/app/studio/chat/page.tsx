@@ -9,7 +9,7 @@ import { MessageBubble, SectionHeader } from "@/components/studio-ui";
 export default function StudentChatPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const { currentBot, chatInput, setChatInput, chatMessages, handleSendQuestion } = useStudio();
+  const { currentBot, chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion } = useStudio();
 
   useEffect(() => {
     if (isLoading) return;
@@ -54,6 +54,12 @@ export default function StudentChatPage() {
           {recentMessages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
+          {chatLoading && (
+            <div className="rounded-[26px] border border-line bg-white/72 p-4">
+              <p className="text-sm font-semibold text-navy">교과서 챗봇</p>
+              <p className="mt-3 text-sm text-muted animate-pulse">답변을 생성하고 있습니다...</p>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 rounded-[24px] border border-line bg-white/82 p-4">
@@ -74,25 +80,14 @@ export default function StudentChatPage() {
             />
           </label>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {currentBot.starterPrompts.slice(0, 2).map((prompt) => (
-                <button
-                  key={prompt}
-                  className="rounded-full border border-line bg-surface-strong px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-white"
-                  onClick={() => setChatInput(prompt)}
-                  type="button"
-                >
-                  {prompt.length > 25 ? `${prompt.slice(0, 25)}…` : prompt}
-                </button>
-              ))}
-            </div>
+          <div className="mt-4 flex items-center justify-end">
             <button
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               onClick={handleSendQuestion}
+              disabled={chatLoading}
               type="button"
             >
-              질문 보내기
+              {chatLoading ? "답변 생성 중..." : "질문 보내기"}
             </button>
           </div>
         </div>

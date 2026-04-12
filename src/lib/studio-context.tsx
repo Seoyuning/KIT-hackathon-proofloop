@@ -50,6 +50,7 @@ interface StudioState {
   chatInput: string;
   setChatInput: (v: string) => void;
   chatMessages: ChatMessage[];
+  chatLoading: boolean;
   handleSendQuestion: () => void;
 
   /* question db */
@@ -100,6 +101,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([createWelcomeMessage(initialBot)]);
+  const [chatLoading, setChatLoading] = useState(false);
   const [questionBank, setQuestionBank] = useState<QuestionCluster[]>(initialQuestionClusters);
 
   const [lessonUnitIds, setLessonUnitIds] = useState<string[]>(initialLessonUnitIds);
@@ -157,24 +159,87 @@ export function StudioProvider({ children }: { children: ReactNode }) {
 
   function handleSendQuestion() {
     const question = chatInput.trim();
-    if (!question) return;
+    if (!question || chatLoading) return;
 
     const userMessage: ChatMessage = { id: `user-${messageSerial}`, role: "user", text: question };
-    const reply = buildGroundedReply(currentBot, question, messageSerial + 1);
-    const nextQB = recordQuestionCluster(questionBank, currentBot, question, reply);
-
-    setChatMessages((c) => [...c, userMessage, {
-      id: reply.messageId,
-      role: "assistant",
-      text: reply.answer,
-      evidence: reply.evidence,
-      followUp: reply.followUp,
-      unitLabel: reply.sectionTitle ?? undefined,
-    }]);
-    setQuestionBank(nextQB);
+    setChatMessages((c) => [...c, userMessage]);
     setChatInput("");
-    setMessageSerial((c) => c + 2);
-    syncTeacherOutputs(currentBot, nextQB, lessonUnitIds, lessonFocus, lessonMinutes, examUnitIds, examPurpose, examQuestionCount);
+    setChatLoading(true);
+
+    const history = chatMessages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .map((m) => ({ role: m.role, text: m.text }));
+
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        botId: currentBot.id,
+        sections: currentBot.sections.map((s) => ({
+          title: s.title,
+          pages: s.pages,
+          summary: s.summary,
+          explanation: s.explanation,
+          keywords: s.keywords,
+          misconceptionTags: s.misconceptionTags,
+          citationFocus: s.citationFocus,
+        })),
+        history,
+        botMeta: {
+          grade: currentBot.grade,
+          subject: currentBot.subject,
+          publisher: currentBot.publisher,
+          textbookName: currentBot.textbookName,
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          setChatMessages((c) => [
+            ...c,
+            { id: `assistant-${messageSerial + 1}`, role: "assistant", text: `오류: ${data.error}` },
+          ]);
+        } else {
+          const evidence: import("@/lib/studio-generation").GroundedEvidence[] = [];
+          if (data.evidence) {
+            const parts = data.evidence.split("/").map((s: string) => s.trim());
+            if (parts.length >= 2) {
+              evidence.push({ unitTitle: parts[0], pages: parts[1], reason: `${parts[0]} ${parts[1]}을 근거로 답변했습니다.` });
+            } else if (parts[0]) {
+              evidence.push({ unitTitle: parts[0], pages: "", reason: `${parts[0]}을 근거로 답변했습니다.` });
+            }
+          }
+
+          setChatMessages((c) => [
+            ...c,
+            {
+              id: `assistant-${messageSerial + 1}`,
+              role: "assistant",
+              text: data.answer,
+              evidence: evidence.length > 0 ? evidence : undefined,
+              followUp: data.followUp || undefined,
+            },
+          ]);
+
+          // Also record into question cluster for teacher view (use fallback)
+          const fallbackReply = buildGroundedReply(currentBot, question, messageSerial + 1);
+          const nextQB = recordQuestionCluster(questionBank, currentBot, question, fallbackReply);
+          setQuestionBank(nextQB);
+          syncTeacherOutputs(currentBot, nextQB, lessonUnitIds, lessonFocus, lessonMinutes, examUnitIds, examPurpose, examQuestionCount);
+        }
+      })
+      .catch(() => {
+        setChatMessages((c) => [
+          ...c,
+          { id: `assistant-${messageSerial + 1}`, role: "assistant", text: "AI 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요." },
+        ]);
+      })
+      .finally(() => {
+        setChatLoading(false);
+        setMessageSerial((c) => c + 2);
+      });
   }
 
   function handleLessonGenerate() {
@@ -189,7 +254,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     <StudioContext.Provider
       value={{
         currentBot, handleBotChange,
-        chatInput, setChatInput, chatMessages, handleSendQuestion,
+        chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,
         lessonUnitIds, setLessonUnitIds, lessonFocus, setLessonFocus, lessonMinutes, setLessonMinutes, lessonKit, handleLessonGenerate,
