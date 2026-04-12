@@ -322,6 +322,83 @@ function TextbookSelector({ subject, currentBot, onSelect }: { subject: string; 
   );
 }
 
+function TeacherTextbookSelector({ subject, currentBot, addCustomBot }: { subject: string | null; currentBot: TextbookBot; addCustomBot: (bot: TextbookBot) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasSelection = !!currentBot.publisher;
+
+  if (!subject) {
+    return (
+      <div className="mt-5">
+        <p className="text-sm font-semibold">교과서 선택</p>
+        <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
+          <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
+          <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
+            과목 설정하러 가기 →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Collapsed: show compact line with current selection
+  if (hasSelection && !expanded) {
+    return (
+      <div className="mt-5 flex items-center justify-between rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
+        <span className="text-sm font-semibold text-white">{currentBot.publisher} · {currentBot.textbookName}</span>
+        <button
+          type="button"
+          className="whitespace-nowrap rounded-full border border-white/12 bg-white/8 px-2.5 py-1 text-xs font-medium text-white/82 transition-colors hover:bg-white/14"
+          onClick={() => setExpanded(true)}
+        >
+          변경
+        </button>
+      </div>
+    );
+  }
+
+  // Expanded: full selector
+  return (
+    <div className="mt-5">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">교과서 선택</p>
+        {hasSelection && (
+          <button
+            type="button"
+            className="text-xs text-white/58 hover:text-white/80"
+            onClick={() => setExpanded(false)}
+          >
+            접기
+          </button>
+        )}
+      </div>
+      <TextbookSelector
+        subject={subject}
+        currentBot={currentBot}
+        onSelect={(cat) => {
+          const dynBot: TextbookBot = {
+            id: cat.id,
+            schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
+            grade: cat.grade,
+            subject: cat.subject,
+            publisher: cat.publisher,
+            textbookName: cat.textbookName,
+            description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
+            distributionLabel: "카탈로그",
+            activeStudents: 0,
+            starterPrompts: [
+              `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
+              `이 단원에서 자주 틀리는 부분이 뭐야?`,
+            ],
+            sections: [],
+          };
+          addCustomBot(dynBot);
+          setExpanded(false);
+        }}
+      />
+    </div>
+  );
+}
+
 function StudioSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -396,41 +473,11 @@ function StudioSidebar() {
               </div>
 
               {/* Textbook selection — teacher only */}
-              <div className="mt-5">
-                <p className="text-sm font-semibold">교과서 선택</p>
-                {user?.subject ? (
-                  <TextbookSelector
-                    subject={user.subject}
-                    currentBot={currentBot}
-                    onSelect={(cat) => {
-                      const dynBot: TextbookBot = {
-                        id: cat.id,
-                        schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
-                        grade: cat.grade,
-                        subject: cat.subject,
-                        publisher: cat.publisher,
-                        textbookName: cat.textbookName,
-                        description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
-                        distributionLabel: "카탈로그",
-                        activeStudents: 0,
-                        starterPrompts: [
-                          `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
-                          `이 단원에서 자주 틀리는 부분이 뭐야?`,
-                        ],
-                        sections: [],
-                      };
-                      addCustomBot(dynBot);
-                    }}
-                  />
-                ) : (
-                  <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
-                    <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
-                    <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
-                      과목 설정하러 가기 →
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <TeacherTextbookSelector
+                subject={user?.subject ?? null}
+                currentBot={currentBot}
+                addCustomBot={addCustomBot}
+              />
 
               {/* Trending questions */}
               {topClusters.length > 0 && (
