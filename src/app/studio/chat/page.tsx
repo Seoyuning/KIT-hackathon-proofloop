@@ -79,11 +79,11 @@ export default function StudentChatPage() {
               {currentBot.starterPrompts.slice(0, 2).map((prompt) => (
                 <button
                   key={prompt}
-                  className="whitespace-nowrap rounded-full border border-line bg-surface-strong px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-white"
+                  className="rounded-full border border-line bg-surface-strong px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-white"
                   onClick={() => setChatInput(prompt)}
                   type="button"
                 >
-                  예시 채우기
+                  {prompt.length > 25 ? `${prompt.slice(0, 25)}…` : prompt}
                 </button>
               ))}
             </div>

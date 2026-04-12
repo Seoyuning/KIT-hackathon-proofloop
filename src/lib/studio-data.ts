@@ -330,6 +330,82 @@ export const textbookBots: TextbookBot[] = [
   },
 ];
 
+export type StudentWeakness = {
+  id: string;
+  botId: string;
+  studentName: string;
+  weakConcepts: Array<{
+    sectionId: string;
+    misconception: string;
+    questionCount: number;
+    lastQuestion: string;
+  }>;
+};
+
+export const initialStudentWeaknesses: StudentWeakness[] = [
+  {
+    id: "sw-1",
+    botId: "high-math-bisang",
+    studentName: "김서윤",
+    weakConcepts: [
+      { sectionId: "quadratic-axis", misconception: "축과 꼭짓점을 순서만 외우고 그래프 이동과 연결하지 못함", questionCount: 5, lastQuestion: "축이 x=p인 이유를 그래프로 설명해줘" },
+      { sectionId: "quadratic-maxmin", misconception: "정의역이 달라질 때 최대·최소 판단이 달라진다는 점을 놓침", questionCount: 3, lastQuestion: "정의역이 있으면 최소가 달라질 수 있어?" },
+    ],
+  },
+  {
+    id: "sw-2",
+    botId: "high-math-bisang",
+    studentName: "이준호",
+    weakConcepts: [
+      { sectionId: "permutation-combination", misconception: "순서를 고려하는지 여부를 문제 문장과 연결하지 못함", questionCount: 6, lastQuestion: "대표 뽑기가 왜 조합이야?" },
+      { sectionId: "quadratic-axis", misconception: "a 값의 부호와 크기가 그래프에 주는 영향을 한 번에 설명하지 못함", questionCount: 2, lastQuestion: "a가 음수면 그래프가 어떻게 바뀌어?" },
+    ],
+  },
+  {
+    id: "sw-3",
+    botId: "high-math-bisang",
+    studentName: "박민지",
+    weakConcepts: [
+      { sectionId: "quadratic-maxmin", misconception: "꼭짓점의 y값과 최대·최소를 연결하지 못하고 공식만 대입함", questionCount: 4, lastQuestion: "꼭짓점 y값이 왜 최소야?" },
+    ],
+  },
+  {
+    id: "sw-4",
+    botId: "middle-science-mirae",
+    studentName: "정하늘",
+    weakConcepts: [
+      { sectionId: "photosynthesis-respiration", misconception: "식물이 호흡하지 않는다고 오해함", questionCount: 7, lastQuestion: "식물은 밤에만 호흡하는 거 아니야?" },
+      { sectionId: "state-change-particles", misconception: "입자 사이 거리가 커지는 것과 입자 수가 늘어나는 것을 혼동함", questionCount: 3, lastQuestion: "기체가 되면 입자가 더 많아지는 거 아냐?" },
+    ],
+  },
+  {
+    id: "sw-5",
+    botId: "middle-science-mirae",
+    studentName: "최예린",
+    weakConcepts: [
+      { sectionId: "current-voltage", misconception: "전류와 전압을 같은 말로 사용함", questionCount: 4, lastQuestion: "전압이 높으면 전류도 높은 거 아냐?" },
+      { sectionId: "photosynthesis-respiration", misconception: "광합성과 호흡을 낮/밤의 시간 구분으로만 이해함", questionCount: 2, lastQuestion: "광합성은 낮에만 하는 거지?" },
+    ],
+  },
+  {
+    id: "sw-6",
+    botId: "high-korean-chunjae",
+    studentName: "한도윤",
+    weakConcepts: [
+      { sectionId: "reading-main-idea", misconception: "사례나 예시 문장을 중심 내용으로 착각함", questionCount: 5, lastQuestion: "예시가 길면 그게 중심 아니야?" },
+      { sectionId: "speech-claim-evidence", misconception: "주장과 근거를 모두 비슷한 중요 문장으로만 읽음", questionCount: 3, lastQuestion: "중요한 말이면 다 주장이지?" },
+    ],
+  },
+  {
+    id: "sw-7",
+    botId: "high-korean-chunjae",
+    studentName: "오지우",
+    weakConcepts: [
+      { sectionId: "reading-data-interpretation", misconception: "자료를 숫자 읽기 문제로만 보고 본문과 연결하지 못함", questionCount: 4, lastQuestion: "그래프 숫자만 읽으면 안 돼?" },
+    ],
+  },
+];
+
 export const initialQuestionClusters: QuestionCluster[] = [
   {
     id: "math-axis-1",

@@ -178,6 +178,8 @@ export default function TeacherGeneratePage() {
                     <option value={1}>1문항</option>
                     <option value={2}>2문항</option>
                     <option value={3}>3문항</option>
+                    <option value={5}>5문항</option>
+                    <option value={10}>10문항</option>
                   </select>
                 </label>
               </div>

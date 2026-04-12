@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { initialQuestionClusters, textbookBots, type QuestionCluster, type TextbookBot } from "@/lib/studio-data";
+import { initialQuestionClusters, initialStudentWeaknesses, textbookBots, type QuestionCluster, type StudentWeakness, type TextbookBot } from "@/lib/studio-data";
 import {
   buildExamDraft,
   buildGroundedReply,
@@ -57,6 +57,7 @@ interface StudioState {
   currentClusters: QuestionCluster[];
   currentQuestionVolume: number;
   topClusters: QuestionCluster[];
+  currentStudentWeaknesses: StudentWeakness[];
 
   /* teacher: lesson */
   teacherMode: TeacherMode;
@@ -119,6 +120,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const currentClusters = sortClusters(questionBank.filter((c) => c.botId === currentBot.id));
   const currentQuestionVolume = currentClusters.reduce((t, c) => t + c.frequency, 0);
   const topClusters = currentClusters.slice(0, 3);
+  const currentStudentWeaknesses = initialStudentWeaknesses.filter((sw) => sw.botId === currentBot.id);
 
   function syncTeacherOutputs(
     bot: TextbookBot,
@@ -188,7 +190,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       value={{
         currentBot, handleBotChange,
         chatInput, setChatInput, chatMessages, handleSendQuestion,
-        questionBank, currentClusters, currentQuestionVolume, topClusters,
+        questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,
         lessonUnitIds, setLessonUnitIds, lessonFocus, setLessonFocus, lessonMinutes, setLessonMinutes, lessonKit, handleLessonGenerate,
         examUnitIds, setExamUnitIds, examPurpose, setExamPurpose, examQuestionCount, setExamQuestionCount, examDraft, handleExamGenerate,
