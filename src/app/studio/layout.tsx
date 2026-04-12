@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { textbookBots } from "@/lib/studio-data";
+import { useState } from "react";
+import { textbookBots, type TextbookBot } from "@/lib/studio-data";
 import { StudioProvider, useStudio } from "@/lib/studio-context";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import type { ReactNode } from "react";
@@ -27,11 +28,82 @@ const teacherNav = [
   { href: "/studio/mypage", label: "마이페이지" },
 ];
 
+function AddBotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (bot: TextbookBot) => void }) {
+  const [grade, setGrade] = useState("");
+  const [subject, setSubject] = useState("");
+  const [publisher, setPublisher] = useState("");
+  const [bookName, setBookName] = useState("");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!grade.trim() || !subject.trim() || !publisher.trim() || !bookName.trim()) return;
+    const id = `custom-${Date.now()}`;
+    const bot: TextbookBot = {
+      id,
+      schoolLevel: grade.includes("중") ? "중등" : "고등",
+      grade: grade.trim(),
+      subject: subject.trim(),
+      publisher: publisher.trim(),
+      textbookName: bookName.trim(),
+      description: `${grade.trim()} ${subject.trim()} 교과서 챗봇`,
+      distributionLabel: "사용자 추가",
+      activeStudents: 0,
+      starterPrompts: [
+        `${subject.trim()}에서 가장 중요한 개념을 설명해줘.`,
+        `이 단원에서 자주 틀리는 부분이 뭐야?`,
+      ],
+      sections: [],
+    };
+    onAdd(bot);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" onClick={onClose}>
+      <form
+        className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+      >
+        <h2 className="text-lg font-semibold text-navy">교과서 봇 추가</h2>
+        <p className="mt-1 text-sm text-muted">교과서 정보를 입력하면 AI 챗봇이 생성됩니다.</p>
+        <div className="mt-4 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy">학년</span>
+            <input className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-teal" placeholder="예: 고1, 중2" value={grade} onChange={(e) => setGrade(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy">과목</span>
+            <input className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-teal" placeholder="예: 수학, 과학, 국어" value={subject} onChange={(e) => setSubject(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy">출판사</span>
+            <input className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-teal" placeholder="예: 비상교육, 미래엔" value={publisher} onChange={(e) => setPublisher(e.target.value)} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy">교과서명</span>
+            <input className="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-teal" placeholder="예: 수학 I, 과학 2" value={bookName} onChange={(e) => setBookName(e.target.value)} />
+          </label>
+        </div>
+        <div className="mt-5 flex gap-3">
+          <button type="button" onClick={onClose} className="flex-1 rounded-full border border-gray-200 py-2.5 text-sm font-semibold text-navy transition-colors hover:bg-gray-50">
+            취소
+          </button>
+          <button type="submit" className="flex-1 rounded-full bg-navy py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal">
+            추가
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function StudioSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { currentBot, handleBotChange, currentQuestionVolume, topClusters, setChatInput } = useStudio();
+  const { allBots, currentBot, handleBotChange, addCustomBot, currentQuestionVolume, topClusters, setChatInput, currentStudentWeaknesses } = useStudio();
+  const [showAddBot, setShowAddBot] = useState(false);
 
   const role = user?.role ?? null;
   const navItems = role === "student" ? studentNav : role === "teacher" ? teacherNav : [];
@@ -42,6 +114,8 @@ function StudioSidebar() {
   }
 
   return (
+    <>
+    {showAddBot && <AddBotModal onClose={() => setShowAddBot(false)} onAdd={addCustomBot} />}
     <aside className="app-sidebar-panel rounded-[28px] p-4 text-white lg:sticky lg:top-3 lg:h-[calc(100vh-24px)] lg:overflow-y-auto lg:p-5 app-scroll">
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -72,9 +146,9 @@ function StudioSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                   pathname === item.href
-                    ? "bg-white text-navy shadow-lg"
+                    ? "bg-teal text-white shadow-lg"
                     : "border border-white/10 bg-white/8 text-white/82 hover:bg-white/14"
                 }`}
               >
@@ -89,7 +163,7 @@ function StudioSidebar() {
             <div className="mt-3 grid gap-3">
               <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
               <SidebarMetric label="질문 볼륨" value={`${currentQuestionVolume}건`} />
-              <SidebarMetric label="활성 학생" value={`${currentBot.activeStudents}명`} />
+              <SidebarMetric label="트래킹 학생" value={`${currentStudentWeaknesses.length}명`} />
             </div>
           </div>
 
@@ -97,10 +171,16 @@ function StudioSidebar() {
           <div className="mt-5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">교과서 봇</p>
-              <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/68">{textbookBots.length}종</span>
+              <button
+                className="rounded-full bg-teal px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-teal/80"
+                onClick={() => setShowAddBot(true)}
+                type="button"
+              >
+                + 추가
+              </button>
             </div>
             <div className="mt-3 space-y-2">
-              {textbookBots.map((bot) => (
+              {allBots.map((bot) => (
                 <button
                   key={bot.id}
                   className={`w-full rounded-[20px] border px-4 py-3 text-left transition-all ${
@@ -162,6 +242,7 @@ function StudioSidebar() {
         </>
       )}
     </aside>
+    </>
   );
 }
 

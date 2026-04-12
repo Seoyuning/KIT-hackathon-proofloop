@@ -43,8 +43,10 @@ type TeacherMode = "lesson" | "exam";
 
 interface StudioState {
   /* bot */
+  allBots: TextbookBot[];
   currentBot: TextbookBot;
   handleBotChange: (bot: TextbookBot) => void;
+  addCustomBot: (bot: TextbookBot) => void;
 
   /* chat */
   chatInput: string;
@@ -96,6 +98,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const initialLessonUnitIds = getDefaultLessonUnitIds(initialBot);
   const initialExamUnitIds = getDefaultExamUnitIds(initialBot);
 
+  const [customBots, setCustomBots] = useState<TextbookBot[]>([]);
+  const allBots = [...textbookBots, ...customBots];
   const [selectedBotId, setSelectedBotId] = useState(initialBot.id);
   const [messageSerial, setMessageSerial] = useState(1);
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
@@ -118,7 +122,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     buildExamDraft(initialBot, initialExamUnitIds, initialQuestionClusters, "중간고사 1회분", 3),
   );
 
-  const currentBot = textbookBots.find((b) => b.id === selectedBotId) ?? textbookBots[0];
+  const currentBot = allBots.find((b) => b.id === selectedBotId) ?? textbookBots[0];
   const currentClusters = sortClusters(questionBank.filter((c) => c.botId === currentBot.id));
   const currentQuestionVolume = currentClusters.reduce((t, c) => t + c.frequency, 0);
   const topClusters = currentClusters.slice(0, 3);
@@ -242,6 +246,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       });
   }
 
+  function addCustomBot(bot: TextbookBot) {
+    setCustomBots((c) => [...c, bot]);
+    handleBotChange(bot);
+  }
+
   function handleLessonGenerate() {
     setLessonKit(buildLessonKit(currentBot, lessonUnitIds, questionBank, lessonFocus, lessonMinutes));
   }
@@ -253,7 +262,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   return (
     <StudioContext.Provider
       value={{
-        currentBot, handleBotChange,
+        allBots, currentBot, handleBotChange, addCustomBot,
         chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,
