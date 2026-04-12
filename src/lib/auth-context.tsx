@@ -122,10 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const { data } = await withTimeout(supabase.auth.getSession(), 8000);
+        const { data } = await withTimeout(supabase.auth.getSession(), 20000);
         if (!mounted) return;
         if (data.session) {
-          const u = await withTimeout(loadProfile(supabase, data.session), 5000);
+          const u = await withTimeout(loadProfile(supabase, data.session), 15000);
           if (mounted) setUser(u);
         }
       } catch (err) {
@@ -186,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: { name: trimmedName, role },
           emailRedirectTo,
         },
-      }), 10000);
+      }), 20000);
 
       if (error) return { error: mapAuthError(error.message) };
 
@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { error } = await withTimeout(
         supabase.auth.signInWithPassword({ email: trimmedEmail, password }),
-        10000
+        20000
       );
       if (error) return { error: mapAuthError(error.message) };
       return { error: null };

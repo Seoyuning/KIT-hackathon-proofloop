@@ -11,7 +11,7 @@ export default function StudioIndex() {
 
   // Fallback: if auth stays loading too long, send to login.
   useEffect(() => {
-    const id = setTimeout(() => setTimedOut(true), 6000);
+    const id = setTimeout(() => setTimedOut(true), 25000);
     return () => clearTimeout(id);
   }, []);
 
