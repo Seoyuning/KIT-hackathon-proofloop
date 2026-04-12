@@ -28,12 +28,16 @@ function JoinClassWidget() {
   const [joining, setJoining] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string }>>([]);
+  const { setActiveClassId } = useStudio();
 
   useEffect(() => {
     fetch("/api/classes").then((r) => r.json()).then((d) => {
-      setJoinedClasses(d.classes?.map((c: any) => ({ id: c.id, name: c.name, subject: c.subject ?? "" })) ?? []);
+      const cls = d.classes?.map((c: any) => ({ id: c.id, name: c.name, subject: c.subject ?? "" })) ?? [];
+      setJoinedClasses(cls);
+      // Auto-select first class
+      if (cls.length > 0) setActiveClassId(cls[0].id);
     }).catch(() => {});
-  }, []);
+  }, [setActiveClassId]);
 
   async function handleJoin() {
     if (!code.trim()) return;
@@ -50,7 +54,9 @@ function JoinClassWidget() {
         setMessage({ type: "error", text: data.error });
       } else {
         setMessage({ type: "ok", text: `"${data.class.name}" 반에 참여했습니다!` });
-        setJoinedClasses((c) => [...c, { id: data.class.id, name: data.class.name, subject: data.class.subject ?? "" }]);
+        const newClass = { id: data.class.id, name: data.class.name, subject: data.class.subject ?? "" };
+        setJoinedClasses((c) => [...c, newClass]);
+        setActiveClassId(data.class.id);
         setCode("");
       }
     } catch {
@@ -60,7 +66,7 @@ function JoinClassWidget() {
     }
   }
 
-  // Group classes by subject
+  // Group by subject
   const grouped = joinedClasses.reduce<Record<string, typeof joinedClasses>>((acc, c) => {
     const key = c.subject || "기타";
     (acc[key] ??= []).push(c);
@@ -68,48 +74,64 @@ function JoinClassWidget() {
   }, {});
 
   return (
-    <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-      <p className="text-sm font-semibold">내 반</p>
+    <div className="mt-5">
+      {/* Join input — always visible at top */}
+      <div className="rounded-[22px] border border-white/10 bg-white/6 p-4">
+        <p className="text-sm font-semibold">반 참여</p>
+        <p className="mt-1 text-xs text-white/50">선생님이 알려준 초대 코드를 입력하세요</p>
+        <div className="mt-3 flex gap-2">
+          <input
+            className="min-w-0 flex-1 rounded-xl border border-white/12 bg-white/10 px-3 py-2 text-sm tracking-widest text-white placeholder:text-white/40 placeholder:tracking-normal outline-none focus:border-teal"
+            placeholder="초대 코드"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            maxLength={6}
+            onKeyDown={(e) => { if (e.key === "Enter") handleJoin(); }}
+          />
+          <button
+            className="whitespace-nowrap rounded-full bg-teal px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal/80 disabled:opacity-60"
+            onClick={handleJoin}
+            disabled={joining || !code.trim()}
+            type="button"
+          >
+            {joining ? "..." : "참여"}
+          </button>
+        </div>
+        {message && (
+          <p className={`mt-2 text-xs ${message.type === "ok" ? "text-teal" : "text-orange"}`}>
+            {message.text}
+          </p>
+        )}
+      </div>
+
+      {/* Joined classes grouped by subject */}
       {joinedClasses.length > 0 ? (
-        <div className="mt-2 space-y-2">
-          {Object.entries(grouped).map(([subject, classes]) => (
-            <div key={subject}>
-              <p className="text-xs font-semibold text-white/50">{subject}</p>
-              <div className="mt-1 space-y-1">
-                {classes.map((c) => (
-                  <div key={c.id} className="rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-xs text-white/82">
-                    {c.name}
-                  </div>
-                ))}
+        <div className="mt-3 rounded-[22px] border border-white/10 bg-white/6 p-4">
+          <p className="text-sm font-semibold">내 반</p>
+          <div className="mt-3 space-y-3">
+            {Object.entries(grouped).map(([subject, classes]) => (
+              <div key={subject}>
+                <p className="text-xs font-bold text-teal">{subject}</p>
+                <div className="mt-1.5 space-y-1">
+                  {classes.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="w-full rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-left text-xs text-white/82 transition-colors hover:bg-white/8"
+                      onClick={() => setActiveClassId(c.id)}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : (
-        <p className="mt-2 text-xs text-white/50">아직 참여한 반이 없습니다</p>
-      )}
-      <div className="mt-3 flex gap-2">
-        <input
-          className="flex-1 rounded-xl border border-white/12 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-teal"
-          placeholder="초대 코드"
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          maxLength={6}
-          onKeyDown={(e) => { if (e.key === "Enter") handleJoin(); }}
-        />
-        <button
-          className="whitespace-nowrap rounded-full bg-teal px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal/80 disabled:opacity-60"
-          onClick={handleJoin}
-          disabled={joining || !code.trim()}
-          type="button"
-        >
-          {joining ? "..." : "참여"}
-        </button>
-      </div>
-      {message && (
-        <p className={`mt-2 text-xs ${message.type === "ok" ? "text-teal" : "text-orange"}`}>
-          {message.text}
-        </p>
+        <div className="mt-3 rounded-[18px] border border-orange/20 bg-orange/5 p-3">
+          <p className="text-xs text-white/72">반에 참여해야 챗봇을 사용할 수 있습니다.</p>
+        </div>
       )}
     </div>
   );
@@ -433,10 +455,7 @@ function StudioSidebar() {
           {/* ===== STUDENT SIDEBAR ===== */}
           {role === "student" && (
             <>
-              {/* Subject selector for student — picks which chatbot to use */}
-              <StudentSubjectSelector currentBot={currentBot} onBotChange={addCustomBot} />
-
-              {/* Join classes */}
+              {/* Join classes — top priority, always visible */}
               <JoinClassWidget />
             </>
           )}
