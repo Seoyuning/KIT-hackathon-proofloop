@@ -27,11 +27,11 @@ function JoinClassWidget() {
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
-  const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string }>>([]);
+  const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string }>>([]);
 
   useEffect(() => {
     fetch("/api/classes").then((r) => r.json()).then((d) => {
-      setJoinedClasses(d.classes?.map((c: any) => ({ id: c.id, name: c.name })) ?? []);
+      setJoinedClasses(d.classes?.map((c: any) => ({ id: c.id, name: c.name, subject: c.subject ?? "" })) ?? []);
     }).catch(() => {});
   }, []);
 
@@ -50,7 +50,7 @@ function JoinClassWidget() {
         setMessage({ type: "error", text: data.error });
       } else {
         setMessage({ type: "ok", text: `"${data.class.name}" 반에 참여했습니다!` });
-        setJoinedClasses((c) => [...c, { id: data.class.id, name: data.class.name }]);
+        setJoinedClasses((c) => [...c, { id: data.class.id, name: data.class.name, subject: data.class.subject ?? "" }]);
         setCode("");
       }
     } catch {
@@ -60,34 +60,50 @@ function JoinClassWidget() {
     }
   }
 
+  // Group classes by subject
+  const grouped = joinedClasses.reduce<Record<string, typeof joinedClasses>>((acc, c) => {
+    const key = c.subject || "기타";
+    (acc[key] ??= []).push(c);
+    return acc;
+  }, {});
+
   return (
     <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
       <p className="text-sm font-semibold">내 반</p>
-      {joinedClasses.length > 0 && (
-        <div className="mt-2 space-y-1">
-          {joinedClasses.map((c) => (
-            <div key={c.id} className="rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-xs text-white/82">
-              {c.name}
+      {joinedClasses.length > 0 ? (
+        <div className="mt-2 space-y-2">
+          {Object.entries(grouped).map(([subject, classes]) => (
+            <div key={subject}>
+              <p className="text-xs font-semibold text-white/50">{subject}</p>
+              <div className="mt-1 space-y-1">
+                {classes.map((c) => (
+                  <div key={c.id} className="rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-xs text-white/82">
+                    {c.name}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
+      ) : (
+        <p className="mt-2 text-xs text-white/50">아직 참여한 반이 없습니다</p>
       )}
-      <div className="mt-3">
+      <div className="mt-3 flex gap-2">
         <input
-          className="w-full rounded-xl border border-white/12 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-teal"
-          placeholder="초대 코드 입력"
+          className="flex-1 rounded-xl border border-white/12 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus:border-teal"
+          placeholder="초대 코드"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           maxLength={6}
           onKeyDown={(e) => { if (e.key === "Enter") handleJoin(); }}
         />
         <button
-          className="mt-2 w-full rounded-full bg-teal px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal/80 disabled:opacity-60"
+          className="whitespace-nowrap rounded-full bg-teal px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal/80 disabled:opacity-60"
           onClick={handleJoin}
           disabled={joining || !code.trim()}
           type="button"
         >
-          {joining ? "참여 중..." : "반 참여하기"}
+          {joining ? "..." : "참여"}
         </button>
       </div>
       {message && (
@@ -172,6 +188,55 @@ function AddBotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (bot: Tex
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function StudentSubjectSelector({ currentBot, onBotChange }: { currentBot: TextbookBot; onBotChange: (bot: TextbookBot) => void }) {
+  const studentSubjects = ["수학", "국어", "영어", "과학", "사회", "한국사", "물리학", "화학", "생명과학", "정보"];
+  const [selected, setSelected] = useState<string | null>(currentBot.subject || null);
+
+  function handleSelect(subj: string) {
+    setSelected(subj);
+    const dynBot: TextbookBot = {
+      id: `student-${subj}`,
+      schoolLevel: "",
+      grade: "",
+      subject: subj,
+      publisher: "",
+      textbookName: subj,
+      description: `${subj} AI 학습 챗봇`,
+      distributionLabel: "",
+      activeStudents: 0,
+      starterPrompts: [
+        `${subj}에서 이해가 안 되는 부분을 물어보세요.`,
+        `${subj} 개념을 쉽게 설명해줘.`,
+      ],
+      sections: [],
+    };
+    onBotChange(dynBot);
+  }
+
+  return (
+    <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+      <p className="text-sm font-semibold">과목 선택</p>
+      <p className="mt-1 text-xs text-white/50">질문할 과목을 선택하세요</p>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {studentSubjects.map((subj) => (
+          <button
+            key={subj}
+            type="button"
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+              selected === subj
+                ? "bg-teal text-white shadow-lg"
+                : "border border-white/10 bg-white/6 text-white/72 hover:bg-white/12"
+            }`}
+            onClick={() => handleSelect(subj)}
+          >
+            {subj}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -295,92 +360,85 @@ function StudioSidebar() {
             ))}
           </div>
 
-          {/* Status */}
-          <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-            <p className="text-xs font-semibold tracking-[0.1em] text-white/58">현재 운영 상태</p>
-            <div className="mt-3 grid gap-3">
-              <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
-              <SidebarMetric label="질문 볼륨" value={`${currentQuestionVolume}건`} />
-              <SidebarMetric label="참여 학생" value={`${currentStudentWeaknesses.length}명`} />
-            </div>
-          </div>
-
-          {/* Textbook selection */}
-          <div className="mt-5">
-            <p className="text-sm font-semibold">교과서 선택</p>
-            {user?.subject ? (
-              <TextbookSelector
-                subject={user.subject}
-                currentBot={currentBot}
-                onSelect={(cat) => {
-                  // Create a dynamic bot from catalog entry
-                  const dynBot: TextbookBot = {
-                    id: cat.id,
-                    schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
-                    grade: cat.grade,
-                    subject: cat.subject,
-                    publisher: cat.publisher,
-                    textbookName: cat.textbookName,
-                    description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
-                    distributionLabel: "카탈로그",
-                    activeStudents: 0,
-                    starterPrompts: [
-                      `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
-                      `이 단원에서 자주 틀리는 부분이 뭐야?`,
-                    ],
-                    sections: [],
-                  };
-                  addCustomBot(dynBot);
-                }}
-              />
-            ) : (
-              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
-                <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
-                <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
-                  과목 설정하러 가기 →
-                </Link>
+          {/* ===== TEACHER SIDEBAR ===== */}
+          {role === "teacher" && (
+            <>
+              {/* Status */}
+              <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+                <p className="text-xs font-semibold tracking-[0.1em] text-white/58">현재 운영 상태</p>
+                <div className="mt-3 grid gap-3">
+                  <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
+                  <SidebarMetric label="질문 볼륨" value={`${currentQuestionVolume}건`} />
+                  <SidebarMetric label="참여 학생" value={`${currentStudentWeaknesses.length}명`} />
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Student: join class */}
-          {role === "student" && <JoinClassWidget />}
-
-          {/* Student: starter prompts */}
-          {role === "student" && (
-            <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-              <p className="text-sm font-semibold">시작 질문</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {currentBot.starterPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    className="rounded-full border border-white/10 bg-white/8 px-3 py-2 text-left text-xs leading-5 text-white/82 transition-colors hover:bg-white/12"
-                    onClick={() => setChatInput(prompt)}
-                    type="button"
-                  >
-                    {prompt}
-                  </button>
-                ))}
+              {/* Textbook selection — teacher only */}
+              <div className="mt-5">
+                <p className="text-sm font-semibold">교과서 선택</p>
+                {user?.subject ? (
+                  <TextbookSelector
+                    subject={user.subject}
+                    currentBot={currentBot}
+                    onSelect={(cat) => {
+                      const dynBot: TextbookBot = {
+                        id: cat.id,
+                        schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
+                        grade: cat.grade,
+                        subject: cat.subject,
+                        publisher: cat.publisher,
+                        textbookName: cat.textbookName,
+                        description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
+                        distributionLabel: "카탈로그",
+                        activeStudents: 0,
+                        starterPrompts: [
+                          `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
+                          `이 단원에서 자주 틀리는 부분이 뭐야?`,
+                        ],
+                        sections: [],
+                      };
+                      addCustomBot(dynBot);
+                    }}
+                  />
+                ) : (
+                  <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
+                    <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
+                    <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
+                      과목 설정하러 가기 →
+                    </Link>
+                  </div>
+                )}
               </div>
-            </div>
+
+              {/* Trending questions */}
+              {topClusters.length > 0 && (
+                <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+                  <p className="text-sm font-semibold">지금 많이 나오는 질문</p>
+                  <div className="mt-3 space-y-3">
+                    {topClusters.map((cluster) => (
+                      <div key={cluster.id} className="rounded-[18px] border border-white/8 bg-black/10 p-3">
+                        <p className="text-sm leading-6 text-white">{cluster.representativeQuestion}</p>
+                        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-white/62">
+                          <span>{cluster.misconception}</span>
+                          <span>{cluster.frequency}회</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
-          {/* Teacher: trending questions */}
-          {role === "teacher" && topClusters.length > 0 && (
-            <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-              <p className="text-sm font-semibold">지금 많이 나오는 질문</p>
-              <div className="mt-3 space-y-3">
-                {topClusters.map((cluster) => (
-                  <div key={cluster.id} className="rounded-[18px] border border-white/8 bg-black/10 p-3">
-                    <p className="text-sm leading-6 text-white">{cluster.representativeQuestion}</p>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-xs text-white/62">
-                      <span>{cluster.misconception}</span>
-                      <span>{cluster.frequency}회</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* ===== STUDENT SIDEBAR ===== */}
+          {role === "student" && (
+            <>
+              {/* Subject selector for student — picks which chatbot to use */}
+              <StudentSubjectSelector currentBot={currentBot} onBotChange={addCustomBot} />
+
+              {/* Join classes */}
+              <JoinClassWidget />
+            </>
           )}
         </>
       )}
