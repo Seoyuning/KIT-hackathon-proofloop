@@ -125,62 +125,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Use server-side /api/auth/me to check session — avoids browser→Supabase issues
     (async () => {
       try {
-        // Race getSession against a 12s timeout — if it hangs (stale cookie),
-        // clear cookies and proceed as logged-out instead of blocking forever.
-        const result = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 12000)),
-        ]);
-
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
         if (!mounted) return;
-
-        if (result && "data" in result && result.data.session) {
-          const u = await loadProfile(supabase, result.data.session);
-          if (mounted) setUser(u);
-        } else if (!result) {
-          // Timeout — stale cookie is blocking. Clear it.
-          console.warn("[auth] getSession timed out — clearing stale cookies");
-          clearAuthCookies();
+        if (data.user) {
+          setUser(data.user);
         }
       } catch (err) {
-        console.error("[auth] getSession failed", err);
-        clearAuthCookies();
+        console.error("[auth] session check failed", err);
       } finally {
         if (mounted) setIsLoading(false);
       }
     })();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        if (!session) {
-          setUser(null);
-          return;
-        }
-        const u = await loadProfile(supabase, session);
-        setUser(u);
-      } catch (err) {
-        console.error("[auth] state change failed", err);
-      } finally {
-        setIsLoading(false);
-      }
-    });
 
     // Keepalive: ping Supabase every 4 minutes to prevent DB sleep
     const keepalive = setInterval(() => {
       fetch("/api/keepalive").catch(() => {});
     }, 4 * 60 * 1000);
 
-    // Also fire once immediately on mount to warm up the DB
     fetch("/api/keepalive").catch(() => {});
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
       clearInterval(keepalive);
     };
-  }, [supabase]);
+  }, []);
 
   const signup = useCallback(
     async (
