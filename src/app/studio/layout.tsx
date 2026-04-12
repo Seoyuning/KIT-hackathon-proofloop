@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { textbookBots, type TextbookBot } from "@/lib/studio-data";
+import { getSubjectTextbooks, getPublishersForSubject, type CatalogTextbook } from "@/lib/textbook-catalog";
 import { StudioProvider, useStudio } from "@/lib/studio-context";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import type { ReactNode } from "react";
@@ -175,6 +176,65 @@ function AddBotModal({ onClose, onAdd }: { onClose: () => void; onAdd: (bot: Tex
   );
 }
 
+function TextbookSelector({ subject, currentBot, onSelect }: { subject: string; currentBot: TextbookBot; onSelect: (t: CatalogTextbook) => void }) {
+  const pubs = getPublishersForSubject(subject);
+  const [selectedPub, setSelectedPub] = useState<string | null>(null);
+  const books = selectedPub ? getSubjectTextbooks(subject).filter((t) => t.publisher === selectedPub) : [];
+
+  return (
+    <div className="mt-3 space-y-2">
+      {/* Publisher select */}
+      <div>
+        <p className="mb-2 text-xs text-white/58">출판사</p>
+        <div className="flex flex-wrap gap-1.5">
+          {pubs.map((pub) => (
+            <button
+              key={pub}
+              type="button"
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                selectedPub === pub
+                  ? "bg-teal text-white"
+                  : "border border-white/10 bg-white/6 text-white/72 hover:bg-white/12"
+              }`}
+              onClick={() => setSelectedPub(selectedPub === pub ? null : pub)}
+            >
+              {pub}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Books for selected publisher */}
+      {selectedPub && books.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="text-xs text-white/58">교과서</p>
+          {books.map((book) => (
+            <button
+              key={book.id}
+              type="button"
+              className={`w-full rounded-[16px] border px-3 py-2.5 text-left transition-all ${
+                currentBot.id === book.id
+                  ? "border-transparent bg-white text-navy shadow-lg"
+                  : "border-white/10 bg-white/6 text-white hover:bg-white/10"
+              }`}
+              onClick={() => onSelect(book)}
+            >
+              <p className={`text-xs font-semibold ${currentBot.id === book.id ? "text-muted" : "text-white/58"}`}>
+                {book.grade} · {book.author}
+              </p>
+              <p className="mt-0.5 text-sm font-semibold">{book.textbookName}</p>
+            </button>
+          ))}
+        </div>
+      )}
+      {!selectedPub && (
+        <p className="rounded-[14px] border border-white/8 bg-black/10 px-3 py-2.5 text-xs text-white/50">
+          출판사를 선택하세요
+        </p>
+      )}
+    </div>
+  );
+}
+
 function StudioSidebar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -245,40 +305,42 @@ function StudioSidebar() {
             </div>
           </div>
 
-          {/* Bot list */}
+          {/* Textbook selection */}
           <div className="mt-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold">교과서 봇</p>
-              <button
-                className="rounded-full bg-teal px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-teal/80"
-                onClick={() => setShowAddBot(true)}
-                type="button"
-              >
-                + 추가
-              </button>
-            </div>
-            <div className="mt-3 space-y-2">
-              {allBots.map((bot) => (
-                <button
-                  key={bot.id}
-                  className={`w-full rounded-[20px] border px-4 py-3 text-left transition-all ${
-                    currentBot.id === bot.id
-                      ? "border-transparent bg-white text-navy shadow-lg"
-                      : "border-white/10 bg-white/6 text-white hover:bg-white/10"
-                  }`}
-                  onClick={() => handleBotChange(bot)}
-                  type="button"
-                >
-                  <p className={`text-xs font-semibold ${currentBot.id === bot.id ? "text-muted" : "text-white/58"}`}>
-                    {bot.schoolLevel} {bot.grade} · {bot.subject}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold">{bot.publisher} {bot.textbookName}</p>
-                  <p className={`mt-2 line-clamp-2 text-xs leading-5 ${currentBot.id === bot.id ? "text-muted" : "text-white/72"}`}>
-                    {bot.description}
-                  </p>
-                </button>
-              ))}
-            </div>
+            <p className="text-sm font-semibold">교과서 선택</p>
+            {user?.subject ? (
+              <TextbookSelector
+                subject={user.subject}
+                currentBot={currentBot}
+                onSelect={(cat) => {
+                  // Create a dynamic bot from catalog entry
+                  const dynBot: TextbookBot = {
+                    id: cat.id,
+                    schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
+                    grade: cat.grade,
+                    subject: cat.subject,
+                    publisher: cat.publisher,
+                    textbookName: cat.textbookName,
+                    description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
+                    distributionLabel: "카탈로그",
+                    activeStudents: 0,
+                    starterPrompts: [
+                      `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
+                      `이 단원에서 자주 틀리는 부분이 뭐야?`,
+                    ],
+                    sections: [],
+                  };
+                  addCustomBot(dynBot);
+                }}
+              />
+            ) : (
+              <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
+                <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
+                <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
+                  과목 설정하러 가기 →
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Student: join class */}

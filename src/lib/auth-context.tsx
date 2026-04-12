@@ -19,6 +19,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
+  subject: string | null;
   createdAt: string;
 }
 
@@ -27,6 +28,7 @@ interface Profile {
   email: string;
   name: string;
   role: UserRole;
+  subject: string | null;
   created_at: string;
 }
 
@@ -44,6 +46,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   updateName: (name: string) => Promise<AuthResult>;
+  updateSubject: (subject: string) => Promise<AuthResult>;
   updatePassword: (newPassword: string) => Promise<AuthResult>;
   resendConfirmation: (email: string) => Promise<AuthResult>;
 }
@@ -62,6 +65,7 @@ function toAuthUser(profile: Profile): AuthUser {
     email: profile.email,
     name: profile.name,
     role: profile.role,
+    subject: profile.subject ?? null,
     createdAt: profile.created_at,
   };
 }
@@ -72,7 +76,7 @@ async function loadProfile(
 ): Promise<AuthUser | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, name, role, created_at")
+    .select("id, email, name, role, subject, created_at")
     .eq("id", session.user.id)
     .maybeSingle<Profile>();
 
@@ -84,6 +88,7 @@ async function loadProfile(
       email: session.user.email ?? "",
       name: (meta.name as string) ?? "",
       role: ((meta.role as UserRole) ?? "student") satisfies UserRole,
+      subject: (meta.subject as string) ?? null,
       createdAt: session.user.created_at ?? new Date().toISOString(),
     };
   }
@@ -243,6 +248,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [supabase, user]
   );
 
+  const updateSubject = useCallback(
+    async (subject: string): Promise<AuthResult> => {
+      if (!user) return { error: "로그인이 필요합니다." };
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ subject })
+        .eq("id", user.id);
+      if (error) return { error: error.message };
+
+      await supabase.auth.updateUser({ data: { subject } });
+      setUser({ ...user, subject });
+      return { error: null };
+    },
+    [supabase, user]
+  );
+
   const updatePassword = useCallback(
     async (newPassword: string): Promise<AuthResult> => {
       if (!newPassword) return { error: "새 비밀번호를 입력해 주세요." };
@@ -283,6 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         updateName,
+        updateSubject,
         updatePassword,
         resendConfirmation,
       }}

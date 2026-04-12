@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { subjects } from "@/lib/textbook-catalog";
 
 export default function MyPage() {
   const router = useRouter();
-  const { user, isLoading, updateName, updatePassword, logout } = useAuth();
+  const { user, isLoading, updateName, updateSubject, updatePassword, logout } = useAuth();
 
   const [name, setName] = useState("");
   const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
@@ -112,6 +113,37 @@ export default function MyPage() {
             <dd className="mt-1 break-all font-mono text-xs text-muted">{user.id}</dd>
           </div>
         </dl>
+      </section>
+
+      {/* Subject selection */}
+      <section className="app-panel rounded-[28px] p-6">
+        <h2 className="text-lg font-semibold text-navy">담당 과목</h2>
+        <p className="mt-1 text-sm text-muted">
+          {user.role === "teacher" ? "담당 과목을 선택하면 해당 과목의 교과서만 표시됩니다." : "학습 과목을 선택하세요."}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {subjects.map((subj) => (
+            <button
+              key={subj}
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                user.subject === subj
+                  ? "bg-navy text-white shadow-lg"
+                  : "border border-line bg-white text-foreground hover:border-teal/40"
+              }`}
+              onClick={async () => {
+                const { error } = await updateSubject(subj);
+                if (error) setNameMessage({ type: "error", text: error });
+                else setNameMessage({ type: "ok", text: `과목이 "${subj}"(으)로 변경되었습니다.` });
+              }}
+            >
+              {subj}
+            </button>
+          ))}
+        </div>
+        {!user.subject && (
+          <p className="mt-3 text-sm text-orange">과목을 선택해 주세요.</p>
+        )}
       </section>
 
       {/* Profile edit */}
