@@ -13,9 +13,9 @@ export default function Home() {
     router.prefetch("/studio/login");
 
     const raf = requestAnimationFrame(() => setPhase("title"));
-    const toTagline = setTimeout(() => setPhase("tagline"), 1500);
-    const toEnd = setTimeout(() => setPhase("end"), 3000);
-    const redirect = setTimeout(() => router.replace("/studio/login"), 3700);
+    const toTagline = setTimeout(() => setPhase("tagline"), 1800);
+    const toEnd = setTimeout(() => setPhase("end"), 3300);
+    const redirect = setTimeout(() => router.replace("/studio/login"), 4000);
 
     return () => {
       cancelAnimationFrame(raf);

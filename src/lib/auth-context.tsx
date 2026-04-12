@@ -103,6 +103,15 @@ function mapAuthError(message: string): string {
   return message;
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms)
+    ),
+  ]);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -113,10 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        const { data } = await withTimeout(supabase.auth.getSession(), 8000);
         if (!mounted) return;
         if (data.session) {
-          const u = await loadProfile(supabase, data.session);
+          const u = await withTimeout(loadProfile(supabase, data.session), 5000);
           if (mounted) setUser(u);
         }
       } catch (err) {
@@ -170,14 +179,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? `${window.location.origin}/auth/callback`
           : undefined;
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await withTimeout(supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
           data: { name: trimmedName, role },
           emailRedirectTo,
         },
-      });
+      }), 10000);
 
       if (error) return { error: mapAuthError(error.message) };
 
@@ -195,10 +204,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!trimmedEmail) return { error: "이메일을 입력해 주세요." };
       if (!password) return { error: "비밀번호를 입력해 주세요." };
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password,
-      });
+      const { error } = await withTimeout(
+        supabase.auth.signInWithPassword({ email: trimmedEmail, password }),
+        10000
+      );
       if (error) return { error: mapAuthError(error.message) };
       return { error: null };
     },

@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export default function StudioIndex() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
+
+  // Fallback: if auth stays loading too long, send to login.
+  useEffect(() => {
+    const id = setTimeout(() => setTimedOut(true), 6000);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading && !timedOut) return;
     if (!user) {
       router.replace("/studio/login");
       return;
     }
     router.replace(user.role === "student" ? "/studio/chat" : "/studio/analysis");
-  }, [user, isLoading, router]);
+  }, [user, isLoading, timedOut, router]);
 
   return (
     <div className="flex min-h-[calc(100vh-6rem)] items-center justify-center px-4">
