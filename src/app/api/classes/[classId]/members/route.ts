@@ -11,13 +11,27 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
 
+  // Verify user is the teacher of this class
+  const { data: classData } = await supabase
+    .from("classes")
+    .select("teacher_id")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (!classData || classData.teacher_id !== user.id) {
+    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+  }
+
   // Get class members with profile info
   const { data: members, error: memErr } = await supabase
     .from("class_members")
     .select("student_id, joined_at, profiles:student_id(name, email)")
     .eq("class_id", classId);
 
-  if (memErr) return NextResponse.json({ error: memErr.message }, { status: 500 });
+  if (memErr) {
+    console.error("[members] db error:", memErr);
+    return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+  }
 
   // Get question stats per student
   const { data: questions } = await supabase

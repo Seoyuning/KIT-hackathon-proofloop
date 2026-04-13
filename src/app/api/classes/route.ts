@@ -29,7 +29,10 @@ export async function GET(request: Request) {
       .eq("teacher_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[classes] list error:", error);
+      return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
+    }
     return NextResponse.json({ classes: data });
   } else {
     // Student: get joined classes
@@ -48,6 +51,12 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+
+  // Verify teacher role
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (profile?.role !== "teacher") {
+    return NextResponse.json({ error: "교사만 반을 만들 수 있습니다." }, { status: 403 });
+  }
 
   const body = await request.json().catch(() => null);
   if (!body?.name || !body?.subject || !body?.grade || !body?.publisher || !body?.textbookName) {
@@ -80,6 +89,9 @@ export async function POST(request: Request) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("[classes] create error:", error);
+    return NextResponse.json({ error: "반 생성에 실패했습니다." }, { status: 500 });
+  }
   return NextResponse.json({ class: data });
 }

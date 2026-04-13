@@ -77,6 +77,12 @@ ${sectionBlock}
 }
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) {
+    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+  }
+
   if (!GEMINI_API_KEY) {
     return NextResponse.json(
       { error: "GEMINI_API_KEY가 설정되지 않았습니다." },
