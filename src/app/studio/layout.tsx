@@ -329,7 +329,6 @@ function TextbookSelector({ subject, currentBot, onSelect }: { subject: string; 
 }
 
 function TeacherTextbookSelector({ subject, currentBot, addCustomBot }: { subject: string | null; currentBot: TextbookBot; addCustomBot: (bot: TextbookBot) => void }) {
-  const [expanded, setExpanded] = useState(false);
   const hasSelection = !!currentBot.publisher;
 
   if (!subject) {
@@ -346,37 +345,24 @@ function TeacherTextbookSelector({ subject, currentBot, addCustomBot }: { subjec
     );
   }
 
-  // Collapsed: show compact line with current selection
-  if (hasSelection && !expanded) {
+  // After selection: show compact line with link to mypage for changes
+  if (hasSelection) {
     return (
-      <div className="mt-5 flex items-center justify-between rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
-        <span className="text-sm font-semibold text-white">{currentBot.publisher} · {currentBot.textbookName}</span>
-        <button
-          type="button"
-          className="whitespace-nowrap rounded-full border border-white/12 bg-white/8 px-2.5 py-1 text-xs font-medium text-white/82 transition-colors hover:bg-white/14"
-          onClick={() => setExpanded(true)}
-        >
-          변경
-        </button>
+      <div className="mt-5 rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-white">{currentBot.publisher} · {currentBot.textbookName}</span>
+        </div>
+        <Link href="/studio/mypage" className="mt-2 inline-block text-xs text-white/50 hover:text-teal">
+          교과서 변경은 마이페이지에서 →
+        </Link>
       </div>
     );
   }
 
-  // Expanded: full selector
+  // No selection yet: show full selector
   return (
     <div className="mt-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold">교과서 선택</p>
-        {hasSelection && (
-          <button
-            type="button"
-            className="text-xs text-white/58 hover:text-white/80"
-            onClick={() => setExpanded(false)}
-          >
-            접기
-          </button>
-        )}
-      </div>
+      <p className="text-sm font-semibold">교과서 선택</p>
       <TextbookSelector
         subject={subject}
         currentBot={currentBot}
@@ -398,7 +384,6 @@ function TeacherTextbookSelector({ subject, currentBot, addCustomBot }: { subjec
             sections: [],
           };
           addCustomBot(dynBot);
-          setExpanded(false);
         }}
       />
     </div>

@@ -144,11 +144,20 @@ export default function TeacherAnalysisPage() {
           </section>
 
           <section className="app-panel rounded-[28px] p-5 sm:p-6">
-            <SectionHeader
-              kicker="교과서 범위"
-              title={`${currentBot.publisher} ${currentBot.textbookName}`}
-              copy="학생 답변의 근거가 되는 교과서 단원과 내용입니다."
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <SectionHeader
+                kicker="교과서 범위"
+                title={`${currentBot.publisher} ${currentBot.textbookName}`}
+                copy="학생 답변의 근거가 되는 교과서 단원과 내용입니다."
+              />
+              <button
+                type="button"
+                className="whitespace-nowrap rounded-full bg-navy px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
+                onClick={() => router.push("/studio/generate")}
+              >
+                + 학습 자료 생성
+              </button>
+            </div>
 
             <div className="app-scroll mt-6 max-h-[600px] space-y-3 overflow-y-auto pr-1">
               {currentBot.sections.map((section) => (
