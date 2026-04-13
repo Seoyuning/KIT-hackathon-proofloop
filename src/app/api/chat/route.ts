@@ -78,6 +78,36 @@ ${sectionBlock}
 [후속 질문] 이어서 생각해볼 서술형 질문`;
 }
 
+// GET: load chat history for a class
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ messages: [] });
+
+  const { searchParams } = new URL(request.url);
+  const classId = searchParams.get("classId");
+  if (!classId) return NextResponse.json({ messages: [] });
+
+  const { data } = await supabase
+    .from("chat_messages")
+    .select("id, role, message_text, evidence, follow_up, understanding, created_at")
+    .eq("class_id", classId)
+    .eq("student_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(50);
+
+  const messages = (data ?? []).map((m: any) => ({
+    id: m.id,
+    role: m.role,
+    text: m.message_text,
+    evidence: m.evidence || undefined,
+    followUp: m.follow_up || undefined,
+    understanding: m.understanding || undefined,
+  }));
+
+  return NextResponse.json({ messages });
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -199,6 +229,12 @@ export async function POST(request: Request) {
             misconception,
             understanding_level: understanding || null,
           });
+
+          // Save chat messages for history
+          await supabase.from("chat_messages").insert([
+            { class_id: body.classId, student_id: user.id, role: "user", message_text: body.question },
+            { class_id: body.classId, student_id: user.id, role: "assistant", message_text: mainAnswer.trim(), evidence: evidenceStr || null, follow_up: followUp || null, understanding: understanding || null },
+          ]);
         }
       } catch (e) {
         console.error("[chat] failed to save question:", e);

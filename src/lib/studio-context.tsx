@@ -162,6 +162,33 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setActiveClassId(cls.id);
     setActiveClassSubject(cls.subject);
     handleBotChange(dynBot);
+
+    // Load chat history from DB
+    fetch(`/api/chat?classId=${cls.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.messages && d.messages.length > 0) {
+          const restored: ChatMessage[] = d.messages.map((m: any) => {
+            const msg: ChatMessage = { id: m.id, role: m.role, text: m.text };
+            if (m.role === "assistant") {
+              if (m.evidence) {
+                const parts = m.evidence.split("/").map((s: string) => s.trim());
+                msg.evidence = parts.length >= 2
+                  ? [{ unitTitle: parts[0], pages: parts[1], reason: `${parts[0]} ${parts[1]}을 근거로 답변했습니다.` }]
+                  : parts[0] ? [{ unitTitle: parts[0], pages: "", reason: `${parts[0]}을 근거로 답변했습니다.` }] : undefined;
+              }
+              if (m.followUp) msg.followUp = m.followUp;
+              if (m.understanding) msg.understanding = m.understanding;
+            }
+            return msg;
+          });
+          setChatMessages((prev) => {
+            const welcome = prev.find((m) => m.id.startsWith("welcome-"));
+            return welcome ? [welcome, ...restored] : restored;
+          });
+        }
+      })
+      .catch(() => {});
   }
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([createWelcomeMessage(initialBot)]);
