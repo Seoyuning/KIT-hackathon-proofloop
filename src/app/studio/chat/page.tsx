@@ -71,35 +71,42 @@ export default function StudentChatPage() {
           )}
         </div>
 
-        <div className="mt-6 rounded-[24px] border border-line bg-white/82 p-4">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-navy">질문 입력</span>
-            <textarea
-              className="w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-7 outline-none transition-colors placeholder:text-muted/70 focus:border-teal"
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendQuestion();
-                }
-              }}
-              placeholder={currentBot.starterPrompts[0]}
-              rows={3}
-              value={chatInput}
-            />
-          </label>
+        {activeClassId ? (
+          <div className="mt-6 rounded-[24px] border border-line bg-white/82 p-4">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-navy">질문 입력</span>
+              <textarea
+                className="w-full rounded-[20px] border border-line bg-white px-4 py-3 text-sm leading-7 outline-none transition-colors placeholder:text-muted/70 focus:border-teal"
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendQuestion();
+                  }
+                }}
+                placeholder={currentBot.starterPrompts[0]}
+                rows={3}
+                value={chatInput}
+              />
+            </label>
 
-          <div className="mt-4 flex items-center justify-end">
-            <button
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={handleSendQuestion}
-              disabled={chatLoading}
-              type="button"
-            >
-              {chatLoading ? "답변 생성 중..." : "질문 보내기"}
-            </button>
+            <div className="mt-4 flex items-center justify-end">
+              <button
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-orange px-5 py-3 text-sm font-semibold text-white transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleSendQuestion}
+                disabled={chatLoading}
+                type="button"
+              >
+                {chatLoading ? "답변 생성 중..." : "질문 보내기"}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-6 rounded-[24px] border border-orange/20 bg-orange/5 p-5 text-center">
+            <p className="text-sm font-semibold text-navy">반에 먼저 참여해 주세요</p>
+            <p className="mt-2 text-sm text-muted">사이드바에서 선생님이 알려준 초대 코드를 입력하면 해당 교과서 챗봇을 사용할 수 있습니다.</p>
+          </div>
+        )}
       </section>
     </div>
   );

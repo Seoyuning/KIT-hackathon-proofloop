@@ -164,13 +164,15 @@ export default function MyPage() {
               <span className="ml-2 text-xs text-muted">(가입 시 결정 · 변경 불가)</span>
             </dd>
           </div>
+          {user.role === "student" && user.grade && (
+            <div className="rounded-[18px] border border-line bg-white p-4">
+              <dt className="text-xs font-semibold text-muted">학년</dt>
+              <dd className="mt-1 text-navy">{user.grade}</dd>
+            </div>
+          )}
           <div className="rounded-[18px] border border-line bg-white p-4">
             <dt className="text-xs font-semibold text-muted">가입일</dt>
             <dd className="mt-1 text-navy">{created}</dd>
-          </div>
-          <div className="rounded-[18px] border border-line bg-white p-4">
-            <dt className="text-xs font-semibold text-muted">사용자 ID</dt>
-            <dd className="mt-1 break-all font-mono text-xs text-muted">{user.id}</dd>
           </div>
         </dl>
       </section>

@@ -411,6 +411,14 @@ function StudioSidebar() {
   const { user, logout } = useAuth();
   const { allBots, currentBot, handleBotChange, addCustomBot, currentQuestionVolume, topClusters, setChatInput, currentStudentWeaknesses } = useStudio();
   const [showAddBot, setShowAddBot] = useState(false);
+  const [dashStats, setDashStats] = useState<{ totalQuestions: number; totalStudents: number; avgUnderstanding: number } | null>(null);
+
+  useEffect(() => {
+    if (user?.role !== "teacher") return;
+    fetch("/api/dashboard").then((r) => r.json()).then((d) => {
+      if (!d.error) setDashStats({ totalQuestions: d.totalQuestions, totalStudents: d.totalStudents, avgUnderstanding: d.avgUnderstanding });
+    }).catch(() => {});
+  }, [user?.role]);
 
   const role = user?.role ?? null;
   const navItems = role === "student" ? studentNav : role === "teacher" ? teacherNav : [];
@@ -473,8 +481,9 @@ function StudioSidebar() {
                 <p className="text-xs font-semibold tracking-[0.1em] text-white/58">현재 운영 상태</p>
                 <div className="mt-3 grid gap-3">
                   <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
-                  <SidebarMetric label="질문 볼륨" value={`${currentQuestionVolume}건`} />
-                  <SidebarMetric label="참여 학생" value={`${currentStudentWeaknesses.length}명`} />
+                  <SidebarMetric label="누적 질문" value={`${dashStats?.totalQuestions ?? 0}건`} />
+                  <SidebarMetric label="참여 학생" value={`${dashStats?.totalStudents ?? 0}명`} />
+                  <SidebarMetric label="평균 이해도" value={dashStats?.avgUnderstanding ? `${dashStats.avgUnderstanding}/5` : "-"} />
                 </div>
               </div>
 
