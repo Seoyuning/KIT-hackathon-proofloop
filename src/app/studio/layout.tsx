@@ -328,64 +328,65 @@ function TextbookSelector({ subject, currentBot, onSelect }: { subject: string; 
   );
 }
 
-function TeacherTextbookSelector({ subject, currentBot, addCustomBot }: { subject: string | null; currentBot: TextbookBot; addCustomBot: (bot: TextbookBot) => void }) {
-  const hasSelection = !!currentBot.publisher;
+function TeacherClassList() {
+  const { switchBotForClass } = useStudio();
+  const [teacherClasses, setTeacherClasses] = useState<Array<{ id: string; name: string; subject: string; grade: string; publisher: string; textbookName: string }>>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  if (!subject) {
-    return (
-      <div className="mt-5">
-        <p className="text-sm font-semibold">교과서 선택</p>
-        <div className="mt-3 rounded-[18px] border border-white/10 bg-white/6 p-4">
-          <p className="text-sm text-white/68">마이페이지에서 과목을 먼저 선택해 주세요.</p>
-          <Link href="/studio/mypage" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
-            과목 설정하러 가기 →
-          </Link>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    fetch("/api/classes").then((r) => r.json()).then((d) => {
+      const cls = d.classes?.map((c: any) => ({
+        id: c.id, name: c.name, subject: c.subject ?? "",
+        grade: c.grade ?? "", publisher: c.publisher ?? "", textbookName: c.textbook_name ?? "",
+      })) ?? [];
+      setTeacherClasses(cls);
+      if (cls.length > 0) {
+        setSelectedId(cls[0].id);
+        switchBotForClass(cls[0]);
+      }
+    }).catch(() => {});
+  }, [switchBotForClass]);
+
+  function handleSelect(cls: typeof teacherClasses[0]) {
+    setSelectedId(cls.id);
+    switchBotForClass(cls);
   }
 
-  // After selection: show compact line with link to mypage for changes
-  if (hasSelection) {
+  if (teacherClasses.length === 0) {
     return (
-      <div className="mt-5 rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">{currentBot.publisher} · {currentBot.textbookName}</span>
-        </div>
-        <Link href="/studio/mypage" className="mt-2 inline-block text-xs text-white/50 hover:text-teal">
-          교과서 변경은 마이페이지에서 →
+      <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+        <p className="text-sm font-semibold">내 반</p>
+        <p className="mt-2 text-xs text-white/50">반 관리 페이지에서 반을 만들어 주세요.</p>
+        <Link href="/studio/classes" className="mt-2 inline-block text-xs font-semibold text-teal hover:underline">
+          반 만들러 가기 →
         </Link>
       </div>
     );
   }
 
-  // No selection yet: show full selector
   return (
-    <div className="mt-5">
-      <p className="text-sm font-semibold">교과서 선택</p>
-      <TextbookSelector
-        subject={subject}
-        currentBot={currentBot}
-        onSelect={(cat) => {
-          const dynBot: TextbookBot = {
-            id: cat.id,
-            schoolLevel: cat.grade.includes("중") ? "중등" : "고등",
-            grade: cat.grade,
-            subject: cat.subject,
-            publisher: cat.publisher,
-            textbookName: cat.textbookName,
-            description: `${cat.publisher} ${cat.textbookName} (${cat.author}) 교과서 AI 챗봇`,
-            distributionLabel: "카탈로그",
-            activeStudents: 0,
-            starterPrompts: [
-              `${cat.subject}에서 가장 중요한 개념을 설명해줘.`,
-              `이 단원에서 자주 틀리는 부분이 뭐야?`,
-            ],
-            sections: [],
-          };
-          addCustomBot(dynBot);
-        }}
-      />
+    <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">내 반</p>
+        <Link href="/studio/classes" className="text-xs text-white/50 hover:text-teal">관리 →</Link>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        {teacherClasses.map((cls) => (
+          <button
+            key={cls.id}
+            type="button"
+            className={`w-full rounded-[14px] border px-3 py-2.5 text-left transition-all ${
+              selectedId === cls.id
+                ? "border-teal bg-teal/12 shadow-md"
+                : "border-white/8 bg-black/10 hover:bg-white/8"
+            }`}
+            onClick={() => handleSelect(cls)}
+          >
+            <p className={`text-sm font-semibold ${selectedId === cls.id ? "text-white" : "text-white/82"}`}>{cls.name}</p>
+            <p className="mt-0.5 text-xs text-white/50">{cls.grade} {cls.subject} · {cls.publisher}</p>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -461,37 +462,17 @@ function StudioSidebar() {
           {/* ===== TEACHER SIDEBAR ===== */}
           {role === "teacher" && (
             <>
+              {/* Class list — primary navigation for teachers */}
+              <TeacherClassList />
+
               {/* Status */}
-              <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-                <p className="text-xs font-semibold tracking-[0.1em] text-white/58">현재 운영 상태</p>
-                <div className="mt-3 grid gap-3">
-                  <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
-                  <SidebarMetric label="누적 질문" value={`${dashStats?.totalQuestions ?? 0}건`} />
-                  <SidebarMetric label="참여 학생" value={`${dashStats?.totalStudents ?? 0}명`} />
-                </div>
-              </div>
-
-              {/* Textbook selection — teacher only */}
-              <TeacherTextbookSelector
-                subject={user?.subject ?? null}
-                currentBot={currentBot}
-                addCustomBot={addCustomBot}
-              />
-
-              {/* Trending questions */}
-              {topClusters.length > 0 && (
+              {currentBot.publisher && (
                 <div className="mt-5 rounded-[22px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-sm font-semibold">지금 많이 나오는 질문</p>
-                  <div className="mt-3 space-y-3">
-                    {topClusters.map((cluster) => (
-                      <div key={cluster.id} className="rounded-[18px] border border-white/8 bg-black/10 p-3">
-                        <p className="text-sm leading-6 text-white">{cluster.representativeQuestion}</p>
-                        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-white/62">
-                          <span>{cluster.misconception}</span>
-                          <span>{cluster.frequency}회</span>
-                        </div>
-                      </div>
-                    ))}
+                  <p className="text-xs font-semibold tracking-[0.1em] text-white/58">현재 운영 상태</p>
+                  <div className="mt-3 grid gap-3">
+                    <SidebarMetric label="교과서" value={`${currentBot.publisher} · ${currentBot.textbookName}`} />
+                    <SidebarMetric label="누적 질문" value={`${dashStats?.totalQuestions ?? 0}건`} />
+                    <SidebarMetric label="참여 학생" value={`${dashStats?.totalStudents ?? 0}명`} />
                   </div>
                 </div>
               )}

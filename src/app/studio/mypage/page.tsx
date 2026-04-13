@@ -19,15 +19,19 @@ function SubjectSection({ user, updateSubject }: { user: AuthUser; updateSubject
     setMsg(null);
     const { error } = await updateSubject(selected);
     setSaving(false);
-    if (error) setMsg({ type: "error", text: error });
-    else setMsg({ type: "ok", text: "과목이 저장되었습니다." });
+    if (error) {
+      setMsg({ type: "error", text: error });
+    } else {
+      setMsg({ type: "ok", text: "과목이 저장되었습니다. 반영 중..." });
+      setTimeout(() => window.location.reload(), 800);
+    }
   }
 
   return (
     <section className="app-panel rounded-[28px] p-6">
       <h2 className="text-lg font-semibold text-navy">담당 과목</h2>
       <p className="mt-1 text-sm text-muted">
-        {user.role === "teacher" ? "담당 과목을 선택하고 확인을 누르세요." : "학습 과목을 선택하고 확인을 누르세요."}
+        담당 과목을 변경하면 사이드바와 반 생성 시 기본 과목이 변경됩니다.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         {subjects.map((subj) => (
@@ -179,6 +183,23 @@ export default function MyPage() {
 
       {/* Subject selection — teacher only */}
       {user.role === "teacher" && <SubjectSection user={user} updateSubject={updateSubject} />}
+
+      {/* Class management shortcut — teacher only */}
+      {user.role === "teacher" && (
+        <section className="app-panel rounded-[28px] p-6">
+          <h2 className="text-lg font-semibold text-navy">반 · 교과서 관리</h2>
+          <p className="mt-1 text-sm text-muted">
+            반마다 학년, 과목, 교과서가 다를 수 있습니다. 반 관리 페이지에서 반별 교과서를 설정하세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/studio/classes")}
+            className="mt-4 whitespace-nowrap rounded-full bg-navy px-6 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
+          >
+            반 관리 페이지로 이동
+          </button>
+        </section>
+      )}
 
       {/* Profile edit */}
       <section className="app-panel rounded-[28px] p-6">
