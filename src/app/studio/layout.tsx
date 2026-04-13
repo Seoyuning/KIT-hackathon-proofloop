@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { textbookBots, type TextbookBot } from "@/lib/studio-data";
 import { getSubjectTextbooks, getPublishersForSubject, type CatalogTextbook } from "@/lib/textbook-catalog";
 import { StudioProvider, useStudio } from "@/lib/studio-context";
@@ -29,8 +29,11 @@ function JoinClassWidget() {
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string; grade: string; publisher: string; textbookName: string }>>([]);
   const { switchBotForClass } = useStudio();
+  const didInit = useRef(false);
 
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     fetch("/api/classes").then((r) => r.json()).then((d) => {
       const cls = d.classes?.map((c: any) => ({
         id: c.id, name: c.name, subject: c.subject ?? "",
@@ -332,8 +335,11 @@ function TeacherClassList() {
   const { switchBotForClass } = useStudio();
   const [teacherClasses, setTeacherClasses] = useState<Array<{ id: string; name: string; subject: string; grade: string; publisher: string; textbookName: string }>>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const didInit = useRef(false);
 
   useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
     fetch("/api/classes").then((r) => r.json()).then((d) => {
       const cls = d.classes?.map((c: any) => ({
         id: c.id, name: c.name, subject: c.subject ?? "",
