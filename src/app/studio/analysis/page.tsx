@@ -8,12 +8,18 @@ import { InfoBlock, SectionHeader } from "@/components/studio-ui";
 
 type AnalysisTab = "class" | "student";
 
+interface SectionStat {
+  sectionTitle: string;
+  avgUnderstanding: number;
+  questionCount: number;
+}
+
 interface DashboardData {
   totalQuestions: number;
   totalStudents: number;
   topMisconception: string;
-  avgUnderstanding: number;
   misconceptionRanking: Array<{ misconception: string; count: number }>;
+  sectionStats: SectionStat[];
 }
 
 export default function TeacherAnalysisPage() {
@@ -56,7 +62,7 @@ export default function TeacherAnalysisPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
             <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-teal/8" />
               <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">누적 질문</p>
@@ -71,11 +77,6 @@ export default function TeacherAnalysisPage() {
               <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-orange/8" />
               <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">상위 오개념</p>
               <p className="relative mt-3 text-sm font-bold leading-5 text-navy">{dashboard?.topMisconception ?? topClusters[0]?.misconception ?? "없음"}</p>
-            </div>
-            <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-              <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-navy/6" />
-              <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">평균 이해도</p>
-              <p className="relative mt-3 text-2xl font-bold tabular-nums tracking-tight text-navy">{dashboard?.avgUnderstanding ? <>{dashboard.avgUnderstanding}<span className="ml-0.5 text-sm font-semibold text-muted">/5</span></> : <span className="text-sm font-semibold text-muted">데이터 없음</span>}</p>
             </div>
           </div>
         </div>
@@ -102,6 +103,43 @@ export default function TeacherAnalysisPage() {
           학생별 약점
         </button>
       </div>
+
+      {/* 챕터별 이해도 */}
+      {dashboard?.sectionStats && dashboard.sectionStats.length > 0 && (
+        <section className="app-panel rounded-[28px] p-5 sm:p-6">
+          <SectionHeader
+            kicker="챕터별 데이터"
+            title="단원별 평균 이해도"
+            copy="학생들의 질문 데이터에서 단원별 평균 이해 수준을 집계합니다."
+          />
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {dashboard.sectionStats.map((s) => (
+              <div key={s.sectionTitle} className="rounded-[22px] border border-line bg-white/72 p-4">
+                <p className="text-sm font-semibold text-navy">{s.sectionTitle}</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-2.5 w-5 rounded-full ${
+                            level <= Math.round(s.avgUnderstanding)
+                              ? s.avgUnderstanding >= 4 ? "bg-teal" : s.avgUnderstanding >= 3 ? "bg-orange" : "bg-red-400"
+                              : "bg-gray-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-bold tabular-nums text-navy">{s.avgUnderstanding}</span>
+                    <span className="text-xs text-muted">/5</span>
+                  </div>
+                  <span className="rounded-full bg-navy/8 px-2.5 py-1 text-xs font-medium text-navy">{s.questionCount}건</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {tab === "class" ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">

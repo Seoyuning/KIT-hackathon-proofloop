@@ -396,12 +396,12 @@ function StudioSidebar() {
   const { user, logout } = useAuth();
   const { allBots, currentBot, handleBotChange, addCustomBot, currentQuestionVolume, topClusters, setChatInput, currentStudentWeaknesses } = useStudio();
   const [showAddBot, setShowAddBot] = useState(false);
-  const [dashStats, setDashStats] = useState<{ totalQuestions: number; totalStudents: number; avgUnderstanding: number } | null>(null);
+  const [dashStats, setDashStats] = useState<{ totalQuestions: number; totalStudents: number } | null>(null);
 
   useEffect(() => {
     if (user?.role !== "teacher") return;
     fetch("/api/dashboard").then((r) => r.json()).then((d) => {
-      if (!d.error) setDashStats({ totalQuestions: d.totalQuestions, totalStudents: d.totalStudents, avgUnderstanding: d.avgUnderstanding });
+      if (!d.error) setDashStats({ totalQuestions: d.totalQuestions, totalStudents: d.totalStudents });
     }).catch(() => {});
   }, [user?.role]);
 
@@ -468,7 +468,6 @@ function StudioSidebar() {
                   <SidebarMetric label="선택 봇" value={`${currentBot.grade} ${currentBot.subject}`} />
                   <SidebarMetric label="누적 질문" value={`${dashStats?.totalQuestions ?? 0}건`} />
                   <SidebarMetric label="참여 학생" value={`${dashStats?.totalStudents ?? 0}명`} />
-                  <SidebarMetric label="평균 이해도" value={dashStats?.avgUnderstanding ? `${dashStats.avgUnderstanding}/5` : "-"} />
                 </div>
               </div>
 

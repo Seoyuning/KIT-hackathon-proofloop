@@ -42,18 +42,22 @@ export async function GET() {
 
   const totalQuestions = questions?.length ?? 0;
 
-  // Aggregate misconceptions
+  // Aggregate misconceptions and per-section understanding
   const misconceptionMap = new Map<string, number>();
-  let totalUnderstanding = 0;
-  let understandingCount = 0;
+  const sectionMap = new Map<string, { total: number; count: number; questionCount: number }>();
 
   for (const q of questions ?? []) {
     if (q.misconception) {
       misconceptionMap.set(q.misconception, (misconceptionMap.get(q.misconception) ?? 0) + 1);
     }
-    if (q.understanding_level) {
-      totalUnderstanding += q.understanding_level;
-      understandingCount++;
+    if (q.section_title) {
+      const entry = sectionMap.get(q.section_title) ?? { total: 0, count: 0, questionCount: 0 };
+      entry.questionCount++;
+      if (q.understanding_level) {
+        entry.total += q.understanding_level;
+        entry.count++;
+      }
+      sectionMap.set(q.section_title, entry);
     }
   }
 
@@ -63,7 +67,14 @@ export async function GET() {
     .map(([misconception, count]) => ({ misconception, count }));
 
   const topMisconception = misconceptionRanking[0]?.misconception ?? "데이터 없음";
-  const avgUnderstanding = understandingCount > 0 ? Math.round((totalUnderstanding / understandingCount) * 10) / 10 : 0;
+
+  const sectionStats = Array.from(sectionMap.entries())
+    .map(([sectionTitle, { total, count, questionCount }]) => ({
+      sectionTitle,
+      avgUnderstanding: count > 0 ? Math.round((total / count) * 10) / 10 : 0,
+      questionCount,
+    }))
+    .sort((a, b) => b.questionCount - a.questionCount);
 
   // Per-class stats
   const classStats = classes.map((cls) => {
@@ -79,8 +90,8 @@ export async function GET() {
     totalQuestions,
     totalStudents: totalStudents ?? 0,
     topMisconception,
-    avgUnderstanding,
     misconceptionRanking,
+    sectionStats,
     classStats,
   });
 }
