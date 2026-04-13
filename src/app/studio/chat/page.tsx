@@ -59,7 +59,7 @@ export default function StudentChatPage() {
           </div>
         </div>
 
-        <div className="app-scroll mt-6 max-h-[560px] space-y-3 overflow-y-auto pr-1">
+        <div className="app-scroll mt-6 max-h-[60vh] sm:max-h-[560px] space-y-3 overflow-y-auto pr-1">
           {recentMessages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}

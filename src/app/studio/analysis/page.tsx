@@ -94,7 +94,7 @@ export default function TeacherAnalysisPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className="group relative overflow-hidden rounded-[22px] border border-line bg-white/90 p-5 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="absolute -right-3 -top-3 h-16 w-16 rounded-full bg-teal/8" />
               <p className="relative text-xs font-bold uppercase tracking-[0.1em] text-muted">누적 질문</p>

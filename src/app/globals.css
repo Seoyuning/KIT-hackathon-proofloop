@@ -160,3 +160,32 @@ textarea {
 .app-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .app-panel {
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .app-sidebar-panel {
+    border-radius: 20px;
+  }
+
+  /* Prevent zoom on input focus (iOS) */
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  /* Full-width buttons on mobile */
+  button {
+    min-height: 44px;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .studio-app {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
