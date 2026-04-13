@@ -175,7 +175,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     buildExamDraft(initialBot, initialExamUnitIds, initialQuestionClusters, "중간고사 1회분", 3),
   );
 
-  const currentBot = allBots.find((b) => b.id === selectedBotId) ?? textbookBots[0];
+  const currentBot = allBots.find((b) => b.id === selectedBotId) ?? emptyBot;
   const currentClusters = sortClusters(questionBank.filter((c) => c.botId === currentBot.id));
   const currentQuestionVolume = currentClusters.reduce((t, c) => t + c.frequency, 0);
   const topClusters = currentClusters.slice(0, 3);
