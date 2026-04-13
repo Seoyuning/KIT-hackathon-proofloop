@@ -103,8 +103,22 @@ export function useStudio() {
   return ctx;
 }
 
+const emptyBot: TextbookBot = {
+  id: "empty",
+  schoolLevel: "",
+  grade: "",
+  subject: "",
+  publisher: "",
+  textbookName: "",
+  description: "",
+  distributionLabel: "",
+  activeStudents: 0,
+  starterPrompts: ["반에 참여하면 교과서 챗봇을 사용할 수 있습니다."],
+  sections: [],
+};
+
 export function StudioProvider({ children }: { children: ReactNode }) {
-  const initialBot = textbookBots[0];
+  const initialBot = emptyBot;
   const initialLessonUnitIds = getDefaultLessonUnitIds(initialBot);
   const initialExamUnitIds = getDefaultExamUnitIds(initialBot);
 

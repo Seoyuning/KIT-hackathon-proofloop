@@ -75,15 +75,19 @@ export default function TeacherAnalysisPage() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="whitespace-nowrap rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">질문 분석</span>
-              <span className="whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
-                {currentBot.publisher} {currentBot.textbookName}
-              </span>
+              {currentBot.publisher && (
+                <span className="whitespace-nowrap rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
+                  {currentBot.publisher} {currentBot.textbookName}
+                </span>
+              )}
             </div>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-navy sm:text-3xl">
-              {currentBot.grade} {currentBot.subject} 질문 분석 대시보드
+              {currentBot.publisher ? `${currentBot.grade} ${currentBot.subject} 질문 분석 대시보드` : "질문 분석 대시보드"}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
-              학생이 실제로 어떤 질문을 반복하는지, 어떤 오개념이 발생하는지 데이터로 확인합니다.
+              {currentBot.publisher
+                ? "학생이 실제로 어떤 질문을 반복하는지, 어떤 오개념이 발생하는지 데이터로 확인합니다."
+                : "사이드바에서 반을 선택하면 해당 반의 질문 데이터를 확인할 수 있습니다."}
             </p>
           </div>
 
