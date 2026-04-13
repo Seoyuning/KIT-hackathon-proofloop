@@ -43,6 +43,14 @@ export function sortClusters(clusters: QuestionCluster[]) {
   return [...clusters].sort((a, b) => b.frequency - a.frequency);
 }
 
+export type ChatSession = {
+  id: string;
+  class_id: string;
+  student_id: string;
+  title: string;
+  created_at: string;
+};
+
 type TeacherMode = "lesson" | "exam";
 
 interface StudioState {
@@ -57,6 +65,13 @@ interface StudioState {
   activeClassSubject: string | null;
   setActiveClass: (id: string | null, subject: string | null) => void;
   switchBotForClass: (cls: { id: string; subject: string; grade: string; publisher: string; textbookName: string }) => void;
+
+  /* chat sessions */
+  chatSessions: ChatSession[];
+  activeChatSessionId: string | null;
+  setActiveChatSessionId: (id: string | null) => void;
+  handleNewChatSession: () => void;
+  handleSwitchSession: (sessionId: string) => void;
 
   /* chat */
   chatInput: string;
@@ -129,6 +144,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
   const [activeClassId, setActiveClassId] = useState<string | null>(null);
   const [activeClassSubject, setActiveClassSubject] = useState<string | null>(null);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [activeChatSessionId, setActiveChatSessionId] = useState<string | null>(null);
 
   function setActiveClass(id: string | null, subject: string | null) {
     setActiveClassId(id);
@@ -163,8 +180,34 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     setActiveClassSubject(cls.subject);
     handleBotChange(dynBot);
 
-    // Load chat history from DB
-    fetch(`/api/chat?classId=${cls.id}`)
+    // Fetch sessions for this class
+    fetch(`/api/chat/sessions?classId=${cls.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const sessions: ChatSession[] = d.sessions ?? [];
+        setChatSessions(sessions);
+        if (sessions.length > 0) {
+          setActiveChatSessionId(sessions[0].id);
+          // Load messages for the latest session
+          loadSessionMessages(cls.id, sessions[0].id);
+        } else {
+          setActiveChatSessionId(null);
+          // Load all messages for this class (legacy, no session)
+          loadSessionMessages(cls.id, null);
+        }
+      })
+      .catch(() => {
+        setChatSessions([]);
+        setActiveChatSessionId(null);
+        loadSessionMessages(cls.id, null);
+      });
+  }
+
+  function loadSessionMessages(classId: string, sessionId: string | null) {
+    const url = sessionId
+      ? `/api/chat?classId=${classId}&sessionId=${sessionId}`
+      : `/api/chat?classId=${classId}`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         if (d.messages && d.messages.length > 0) {
@@ -186,6 +229,10 @@ export function StudioProvider({ children }: { children: ReactNode }) {
             const welcome = prev.find((m) => m.id.startsWith("welcome-"));
             return welcome ? [welcome, ...restored] : restored;
           });
+        } else {
+          // No messages, reset to welcome only
+          const bot = allBots.find((b) => b.id === selectedBotId) ?? emptyBot;
+          setChatMessages([createWelcomeMessage(bot)]);
         }
       })
       .catch(() => {});
@@ -248,6 +295,35 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     syncTeacherOutputs(bot, questionBank, nLessonIds, nFocus, 45, nExamIds, nPurpose, nCount);
   }
 
+  function handleNewChatSession() {
+    if (!activeClassId) return;
+    const bot = allBots.find((b) => b.id === selectedBotId) ?? emptyBot;
+    // Create a new session via API
+    fetch("/api/chat/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ classId: activeClassId }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.session) {
+          setChatSessions((prev) => [d.session, ...prev]);
+          setActiveChatSessionId(d.session.id);
+          setChatMessages([createWelcomeMessage(bot)]);
+          setChatInput("");
+        }
+      })
+      .catch(() => {});
+  }
+
+  function handleSwitchSession(sessionId: string) {
+    if (!activeClassId) return;
+    setActiveChatSessionId(sessionId);
+    const bot = allBots.find((b) => b.id === selectedBotId) ?? emptyBot;
+    setChatMessages([createWelcomeMessage(bot)]);
+    loadSessionMessages(activeClassId, sessionId);
+  }
+
   function handleSendQuestion() {
     const question = chatInput.trim();
     if (!question || chatLoading) return;
@@ -268,6 +344,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
         question,
         botId: currentBot.id,
         classId: activeClassId,
+        sessionId: activeChatSessionId,
         sections: currentBot.sections.map((s) => ({
           title: s.title,
           pages: s.pages,
@@ -316,6 +393,18 @@ export function StudioProvider({ children }: { children: ReactNode }) {
             },
           ]);
 
+          // Track auto-created session from the server
+          if (data.sessionId && !activeChatSessionId) {
+            setActiveChatSessionId(data.sessionId);
+            // Refresh session list
+            if (activeClassId) {
+              fetch(`/api/chat/sessions?classId=${activeClassId}`)
+                .then((r) => r.json())
+                .then((d) => setChatSessions(d.sessions ?? []))
+                .catch(() => {});
+            }
+          }
+
           // Also record into question cluster for teacher view (use fallback)
           const fallbackReply = buildGroundedReply(currentBot, question, messageSerial + 1);
           const nextQB = recordQuestionCluster(questionBank, currentBot, question, fallbackReply);
@@ -352,6 +441,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     <StudioContext.Provider
       value={{
         allBots, currentBot, handleBotChange, addCustomBot, activeClassId, activeClassSubject, setActiveClass, switchBotForClass,
+        chatSessions, activeChatSessionId, setActiveChatSessionId, handleNewChatSession, handleSwitchSession,
         chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,

@@ -146,6 +146,48 @@ function JoinClassWidget() {
   );
 }
 
+function StudentSessionList() {
+  const { chatSessions, activeChatSessionId, handleSwitchSession, handleNewChatSession, activeClassId } = useStudio();
+
+  if (!activeClassId || chatSessions.length === 0) return null;
+
+  return (
+    <div className="mt-3 rounded-[22px] border border-white/10 bg-white/6 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">대화 기록</p>
+        <button
+          type="button"
+          className="text-xs text-teal hover:underline"
+          onClick={handleNewChatSession}
+        >
+          + 새 대화
+        </button>
+      </div>
+      <div className="mt-3 max-h-40 space-y-1 overflow-y-auto app-scroll">
+        {chatSessions.slice(0, 10).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            className={`w-full rounded-[14px] border px-3 py-2 text-left transition-all ${
+              activeChatSessionId === s.id
+                ? "border-teal bg-teal/12 shadow-md"
+                : "border-white/8 bg-black/10 hover:bg-white/8"
+            }`}
+            onClick={() => handleSwitchSession(s.id)}
+          >
+            <p className={`truncate text-xs ${activeChatSessionId === s.id ? "font-semibold text-white" : "text-white/82"}`}>
+              {s.title}
+            </p>
+            <p className="mt-0.5 text-[10px] text-white/40">
+              {new Date(s.created_at).toLocaleDateString("ko-KR")}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const teacherNav = [
   { href: "/studio/analysis", label: "질문 분석" },
   { href: "/studio/generate", label: "수업 도구" },
@@ -490,6 +532,8 @@ function StudioSidebar() {
             <>
               {/* Join classes — top priority, always visible */}
               <JoinClassWidget />
+              {/* Chat session history */}
+              <StudentSessionList />
             </>
           )}
         </>

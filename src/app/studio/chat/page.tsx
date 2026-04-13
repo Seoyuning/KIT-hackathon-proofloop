@@ -1,21 +1,46 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useStudio } from "@/lib/studio-context";
 import { MessageBubble, SectionHeader } from "@/components/studio-ui";
 
+type WeakSection = {
+  sectionTitle: string;
+  questionCount: number;
+  avgUnderstanding: number;
+  misconceptions: string[];
+};
+
 export default function StudentChatPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const { currentBot, chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion, activeClassId, activeClassSubject } = useStudio();
+  const {
+    currentBot, chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
+    activeClassId, activeClassSubject,
+    chatSessions, activeChatSessionId, handleNewChatSession, handleSwitchSession,
+  } = useStudio();
+  const [showSessions, setShowSessions] = useState(false);
+  const [weakSections, setWeakSections] = useState<WeakSection[]>([]);
+  const [weakLoading, setWeakLoading] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
     if (!user) { router.replace("/studio/login"); return; }
     if (user.role !== "student") { router.replace("/studio/analysis"); }
   }, [user, isLoading, router]);
+
+  // Load weakness report when class changes
+  useEffect(() => {
+    if (!activeClassId) return;
+    setWeakLoading(true);
+    fetch(`/api/student/weakness?classId=${activeClassId}`)
+      .then((r) => r.json())
+      .then((d) => setWeakSections(d.weakSections ?? []))
+      .catch(() => setWeakSections([]))
+      .finally(() => setWeakLoading(false));
+  }, [activeClassId]);
 
   if (isLoading || !user || user.role !== "student") return null;
 
@@ -54,8 +79,56 @@ export default function StudentChatPage() {
             title="질문과 답변"
             copy="교과서 범위 안에서 근거를 포함해 답변합니다. 질문은 자동으로 데이터에 누적됩니다."
           />
-          <div className="rounded-[20px] border border-line bg-white px-4 py-3 text-sm text-muted">
-            대화 {recentMessages.length}건
+          <div className="flex items-center gap-2">
+            {activeClassId && (
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-navy px-4 py-2.5 text-xs font-semibold text-white transition-transform hover:-translate-y-0.5"
+                onClick={handleNewChatSession}
+              >
+                + 새 채팅
+              </button>
+            )}
+            {chatSessions.length > 0 && (
+              <div className="relative">
+                <button
+                  type="button"
+                  className="rounded-[20px] border border-line bg-white px-4 py-2.5 text-xs font-medium text-muted transition-colors hover:border-teal"
+                  onClick={() => setShowSessions(!showSessions)}
+                >
+                  대화 {recentMessages.length}건 {showSessions ? "▲" : "▼"}
+                </button>
+                {showSessions && (
+                  <div className="absolute right-0 top-full z-20 mt-1 w-56 max-h-60 overflow-y-auto rounded-[18px] border border-line bg-white p-2 shadow-xl">
+                    {chatSessions.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`w-full rounded-[12px] px-3 py-2 text-left text-xs transition-colors ${
+                          activeChatSessionId === s.id
+                            ? "bg-teal/10 font-semibold text-teal"
+                            : "text-muted hover:bg-gray-50"
+                        }`}
+                        onClick={() => {
+                          handleSwitchSession(s.id);
+                          setShowSessions(false);
+                        }}
+                      >
+                        <p className="truncate">{s.title}</p>
+                        <p className="mt-0.5 text-[10px] text-muted/60">
+                          {new Date(s.created_at).toLocaleDateString("ko-KR")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {chatSessions.length === 0 && (
+              <div className="rounded-[20px] border border-line bg-white px-4 py-3 text-sm text-muted">
+                대화 {recentMessages.length}건
+              </div>
+            )}
           </div>
         </div>
 
@@ -108,6 +181,69 @@ export default function StudentChatPage() {
           </div>
         )}
       </section>
+
+      {/* Weakness Report */}
+      {activeClassId && (
+        <section className="app-panel rounded-[28px] p-5 sm:p-6">
+          <SectionHeader
+            kicker="학습 분석"
+            title="내 약점 리포트"
+            copy="질문 데이터를 기반으로 이해도가 낮은 단원을 보여줍니다."
+          />
+
+          {weakLoading ? (
+            <div className="mt-6 text-sm text-muted animate-pulse">분석 중...</div>
+          ) : weakSections.length === 0 ? (
+            <div className="mt-6 rounded-[20px] border border-line bg-surface-strong p-4 text-center">
+              <p className="text-sm text-muted">질문을 더 보내면 약점 리포트가 생성됩니다.</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              {weakSections.map((section) => (
+                <div key={section.sectionTitle} className="rounded-[20px] border border-line bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-navy">{section.sectionTitle}</p>
+                      <p className="mt-1 text-xs text-muted">질문 {section.questionCount}건</p>
+                    </div>
+                    {section.avgUnderstanding > 0 && (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((level) => (
+                            <div
+                              key={level}
+                              className={`h-2 w-5 rounded-full ${
+                                level <= Math.round(section.avgUnderstanding)
+                                  ? section.avgUnderstanding >= 4 ? "bg-teal" : section.avgUnderstanding >= 3 ? "bg-orange" : "bg-red-400"
+                                  : "bg-gray-200"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-muted">
+                          평균 이해도 {section.avgUnderstanding}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {section.misconceptions.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {section.misconceptions.slice(0, 3).map((m) => (
+                        <span
+                          key={m}
+                          className="rounded-full bg-orange/10 px-2.5 py-1 text-[11px] font-medium text-orange"
+                        >
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

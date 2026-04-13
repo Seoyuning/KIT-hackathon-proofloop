@@ -7,6 +7,7 @@ interface ChatRequestBody {
   question: string;
   botId: string;
   classId?: string;
+  sessionId?: string;
   /** Textbook sections for grounding */
   sections: Array<{
     title: string;
@@ -78,7 +79,7 @@ ${sectionBlock}
 [후속 질문] 이어서 생각해볼 서술형 질문`;
 }
 
-// GET: load chat history for a class
+// GET: load chat history for a class, optionally filtered by sessionId
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -86,15 +87,22 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const classId = searchParams.get("classId");
+  const sessionId = searchParams.get("sessionId");
   if (!classId) return NextResponse.json({ messages: [] });
 
-  const { data } = await supabase
+  let query = supabase
     .from("chat_messages")
-    .select("id, role, message_text, evidence, follow_up, understanding, created_at")
+    .select("id, role, message_text, evidence, follow_up, understanding, session_id, created_at")
     .eq("class_id", classId)
     .eq("student_id", user.id)
     .order("created_at", { ascending: true })
     .limit(50);
+
+  if (sessionId) {
+    query = query.eq("session_id", sessionId);
+  }
+
+  const { data } = await query;
 
   const messages = (data ?? []).map((m: any) => ({
     id: m.id,
@@ -103,6 +111,7 @@ export async function GET(request: Request) {
     evidence: m.evidence || undefined,
     followUp: m.follow_up || undefined,
     understanding: m.understanding || undefined,
+    sessionId: m.session_id || undefined,
   }));
 
   return NextResponse.json({ messages });
@@ -201,6 +210,7 @@ export async function POST(request: Request) {
     }
 
     // Save question to DB if student is in a class
+    let resolvedSessionId: string | null = body.sessionId || null;
     if (body.classId) {
       try {
         const supabase = await createClient();
@@ -230,10 +240,24 @@ export async function POST(request: Request) {
             understanding_level: understanding || null,
           });
 
+          // Resolve session_id: use provided one, or auto-create
+          if (!resolvedSessionId) {
+            const { data: newSession } = await supabase
+              .from("chat_sessions")
+              .insert({
+                class_id: body.classId,
+                student_id: user.id,
+                title: body.question.slice(0, 30) + (body.question.length > 30 ? "..." : ""),
+              })
+              .select("id")
+              .single();
+            resolvedSessionId = newSession?.id ?? null;
+          }
+
           // Save chat messages for history
           await supabase.from("chat_messages").insert([
-            { class_id: body.classId, student_id: user.id, role: "user", message_text: body.question },
-            { class_id: body.classId, student_id: user.id, role: "assistant", message_text: mainAnswer.trim(), evidence: evidenceStr || null, follow_up: followUp || null, understanding: understanding || null },
+            { class_id: body.classId, student_id: user.id, role: "user", message_text: body.question, session_id: resolvedSessionId },
+            { class_id: body.classId, student_id: user.id, role: "assistant", message_text: mainAnswer.trim(), evidence: evidenceStr || null, follow_up: followUp || null, understanding: understanding || null, session_id: resolvedSessionId },
           ]);
         }
       } catch (e) {
@@ -246,6 +270,7 @@ export async function POST(request: Request) {
       evidence: evidenceStr,
       followUp: followUp,
       understanding: understanding || null,
+      sessionId: resolvedSessionId,
     });
   } catch (err) {
     console.error("[chat] fetch failed:", err);
