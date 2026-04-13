@@ -29,6 +29,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>("student");
+  const [selectedGrade, setSelectedGrade] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +82,7 @@ function LoginForm() {
           password,
           name: name.trim(),
           role: selectedRole,
+          grade: selectedRole === "student" ? selectedGrade : null,
         }),
       });
       const data = await res.json();
@@ -194,6 +196,28 @@ function LoginForm() {
                   ))}
                 </div>
               </div>
+
+              {selectedRole === "student" && (
+                <div>
+                  <p className="mb-3 text-sm font-medium text-navy">학년</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["중1", "중2", "중3", "고1", "고2", "고3"].map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        className={`rounded-2xl border py-2.5 text-sm font-semibold transition-all ${
+                          selectedGrade === g
+                            ? "border-teal bg-teal/8 text-navy shadow-md"
+                            : "border-line bg-white text-muted hover:border-teal/40"
+                        }`}
+                        onClick={() => setSelectedGrade(g)}
+                      >
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 

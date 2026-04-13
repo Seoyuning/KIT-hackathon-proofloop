@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   const email = body.email.trim().toLowerCase();
   const name = body.name.trim();
   const role = body.role;
+  const grade = body.grade?.trim() || null;
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "올바른 이메일 형식이 아닙니다." }, { status: 400 });
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     email,
     password: body.password,
     options: {
-      data: { name, role },
+      data: { name, role, grade },
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });

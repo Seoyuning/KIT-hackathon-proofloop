@@ -50,7 +50,8 @@ interface StudioState {
 
   /* class */
   activeClassId: string | null;
-  setActiveClassId: (id: string | null) => void;
+  activeClassSubject: string | null;
+  setActiveClass: (id: string | null, subject: string | null) => void;
 
   /* chat */
   chatInput: string;
@@ -108,6 +109,12 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   const [messageSerial, setMessageSerial] = useState(1);
   const [teacherMode, setTeacherMode] = useState<TeacherMode>("lesson");
   const [activeClassId, setActiveClassId] = useState<string | null>(null);
+  const [activeClassSubject, setActiveClassSubject] = useState<string | null>(null);
+
+  function setActiveClass(id: string | null, subject: string | null) {
+    setActiveClassId(id);
+    setActiveClassSubject(subject);
+  }
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([createWelcomeMessage(initialBot)]);
   const [chatLoading, setChatLoading] = useState(false);
@@ -269,7 +276,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   return (
     <StudioContext.Provider
       value={{
-        allBots, currentBot, handleBotChange, addCustomBot, activeClassId, setActiveClassId,
+        allBots, currentBot, handleBotChange, addCustomBot, activeClassId, activeClassSubject, setActiveClass,
         chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,

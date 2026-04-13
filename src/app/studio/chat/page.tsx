@@ -9,7 +9,7 @@ import { MessageBubble, SectionHeader } from "@/components/studio-ui";
 export default function StudentChatPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const { currentBot, chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion } = useStudio();
+  const { currentBot, chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion, activeClassId, activeClassSubject } = useStudio();
 
   useEffect(() => {
     if (isLoading) return;
@@ -20,21 +20,30 @@ export default function StudentChatPage() {
   if (isLoading || !user || user.role !== "student") return null;
 
   const recentMessages = chatMessages.slice(-12);
+  const studentGrade = user.grade ?? "학생";
+  const chatTitle = activeClassId && activeClassSubject
+    ? `${studentGrade} ${activeClassSubject} 챗봇`
+    : `${studentGrade} 챗봇`;
+  const chatDescription = activeClassId && activeClassSubject
+    ? "질문을 보내면 교과서 단원과 쪽수를 근거로 답변합니다. 이해가 안 되는 부분을 자유롭게 물어보세요."
+    : "반에 참여하면 교과서 범위 안에서 근거를 포함한 답변을 받을 수 있습니다. 먼저 사이드바에서 반에 참여해 보세요.";
 
   return (
     <div className="space-y-4">
       <header className="app-panel rounded-[28px] p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-semibold text-teal">Grounded Answering</span>
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
-            {currentBot.publisher} {currentBot.textbookName}
-          </span>
+          {activeClassId && currentBot.publisher && (
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-foreground">
+              {currentBot.publisher} {currentBot.textbookName}
+            </span>
+          )}
         </div>
         <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-navy sm:text-3xl">
-          {currentBot.grade} {currentBot.subject} 교과서 챗봇
+          {chatTitle}
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-7 text-muted">
-          질문을 보내면 교과서 단원과 쪽수를 근거로 답변합니다. 이해가 안 되는 부분을 자유롭게 물어보세요.
+          {chatDescription}
         </p>
       </header>
 

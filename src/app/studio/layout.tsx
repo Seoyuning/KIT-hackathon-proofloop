@@ -28,16 +28,16 @@ function JoinClassWidget() {
   const [joining, setJoining] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string }>>([]);
-  const { setActiveClassId } = useStudio();
+  const { setActiveClass } = useStudio();
 
   useEffect(() => {
     fetch("/api/classes").then((r) => r.json()).then((d) => {
       const cls = d.classes?.map((c: any) => ({ id: c.id, name: c.name, subject: c.subject ?? "" })) ?? [];
       setJoinedClasses(cls);
       // Auto-select first class
-      if (cls.length > 0) setActiveClassId(cls[0].id);
+      if (cls.length > 0) setActiveClass(cls[0].id, cls[0].subject);
     }).catch(() => {});
-  }, [setActiveClassId]);
+  }, [setActiveClass]);
 
   async function handleJoin() {
     if (!code.trim()) return;
@@ -56,7 +56,7 @@ function JoinClassWidget() {
         setMessage({ type: "ok", text: `"${data.class.name}" 반에 참여했습니다!` });
         const newClass = { id: data.class.id, name: data.class.name, subject: data.class.subject ?? "" };
         setJoinedClasses((c) => [...c, newClass]);
-        setActiveClassId(data.class.id);
+        setActiveClass(data.class.id, newClass.subject);
         setCode("");
       }
     } catch {
@@ -118,7 +118,7 @@ function JoinClassWidget() {
                       key={c.id}
                       type="button"
                       className="w-full rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-left text-xs text-white/82 transition-colors hover:bg-white/8"
-                      onClick={() => setActiveClassId(c.id)}
+                      onClick={() => setActiveClass(c.id, c.subject)}
                     >
                       {c.name}
                     </button>

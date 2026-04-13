@@ -19,6 +19,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
+  grade: string | null;
   subject: string | null;
   createdAt: string;
 }
@@ -28,6 +29,7 @@ interface Profile {
   email: string;
   name: string;
   role: UserRole;
+  grade: string | null;
   subject: string | null;
   created_at: string;
 }
@@ -41,7 +43,8 @@ interface AuthState {
     email: string,
     password: string,
     name: string,
-    role: UserRole
+    role: UserRole,
+    grade?: string | null
   ) => Promise<AuthResult>;
   login: (email: string, password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
@@ -65,6 +68,7 @@ function toAuthUser(profile: Profile): AuthUser {
     email: profile.email,
     name: profile.name,
     role: profile.role,
+    grade: profile.grade ?? null,
     subject: profile.subject ?? null,
     createdAt: profile.created_at,
   };
@@ -76,7 +80,7 @@ async function loadProfile(
 ): Promise<AuthUser | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, name, role, subject, created_at")
+    .select("id, email, name, role, grade, subject, created_at")
     .eq("id", session.user.id)
     .maybeSingle<Profile>();
 
@@ -88,6 +92,7 @@ async function loadProfile(
       email: session.user.email ?? "",
       name: (meta.name as string) ?? "",
       role: ((meta.role as UserRole) ?? "student") satisfies UserRole,
+      grade: (meta.grade as string) ?? null,
       subject: (meta.subject as string) ?? null,
       createdAt: session.user.created_at ?? new Date().toISOString(),
     };
@@ -159,7 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: string,
       password: string,
       name: string,
-      role: UserRole
+      role: UserRole,
+      grade?: string | null
     ): Promise<AuthResult> => {
       const trimmedEmail = email.trim().toLowerCase();
       const trimmedName = name.trim();
@@ -181,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: trimmedEmail,
         password,
         options: {
-          data: { name: trimmedName, role },
+          data: { name: trimmedName, role, grade: grade ?? null },
           emailRedirectTo,
         },
       });

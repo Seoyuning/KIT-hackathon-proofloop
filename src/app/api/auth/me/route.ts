@@ -15,7 +15,7 @@ export async function GET() {
     // Load profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, email, name, role, subject, created_at")
+      .select("id, email, name, role, grade, subject, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -26,6 +26,7 @@ export async function GET() {
           email: profile.email,
           name: profile.name,
           role: profile.role,
+          grade: profile.grade ?? null,
           subject: profile.subject ?? null,
           createdAt: profile.created_at,
         },
@@ -40,6 +41,7 @@ export async function GET() {
         email: user.email ?? "",
         name: (meta.name as string) ?? "",
         role: (meta.role as string) ?? "student",
+        grade: (meta.grade as string) ?? null,
         subject: (meta.subject as string) ?? null,
         createdAt: user.created_at ?? new Date().toISOString(),
       },
