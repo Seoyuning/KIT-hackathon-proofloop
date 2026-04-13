@@ -68,6 +68,9 @@ export default function TeacherAnalysisPage() {
 
   if (isLoading || !user || user.role !== "teacher") return null;
 
+  const seedBotIds = ["high-math-bisang", "middle-science-mirae", "high-korean-chunjae"];
+  const isSeedData = seedBotIds.includes(currentBot.id);
+
   return (
     <div className="space-y-4">
       <header className="app-panel rounded-[28px] p-5 sm:p-6">
@@ -176,11 +179,16 @@ export default function TeacherAnalysisPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <SectionHeader
                 kicker="질문 DB"
-                title="통합 질문 클러스터"
-                copy="학생이 실제로 어떤 질문을 반복하는지, 어떤 오개념으로 묶이는지 바로 확인합니다."
+                title={isSeedData ? "통합 질문 클러스터 (예시)" : "통합 질문 클러스터"}
+                copy={isSeedData
+                  ? "아래 데이터는 시연용 예시입니다. 실제 학생이 질문하면 이 자리에 실데이터가 쌓입니다."
+                  : "학생이 실제로 어떤 질문을 반복하는지, 어떤 오개념으로 묶이는지 바로 확인합니다."}
               />
-              <div className="rounded-[20px] border border-line bg-white px-4 py-3 text-sm text-muted">
-                클러스터 {currentClusters.length}개
+              <div className="flex items-center gap-2">
+                {isSeedData && <span className="rounded-full bg-orange/10 px-3 py-1 text-xs font-semibold text-orange">예시 데이터</span>}
+                <div className="rounded-[20px] border border-line bg-white px-4 py-3 text-sm text-muted">
+                  클러스터 {currentClusters.length}개
+                </div>
               </div>
             </div>
 
@@ -214,8 +222,10 @@ export default function TeacherAnalysisPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <SectionHeader
                 kicker="교과서 범위"
-                title={`${currentBot.publisher} ${currentBot.textbookName}`}
-                copy="학생 답변의 근거가 되는 교과서 단원과 내용입니다."
+                title={isSeedData ? `${currentBot.publisher} ${currentBot.textbookName} (예시)` : `${currentBot.publisher} ${currentBot.textbookName}`}
+                copy={isSeedData
+                  ? "아래 단원 데이터는 시연용 예시입니다. 실제 서비스에서는 교과서 데이터가 연동됩니다."
+                  : "학생 답변의 근거가 되는 교과서 단원과 내용입니다."}
               />
               <div className="relative">
                 <button
