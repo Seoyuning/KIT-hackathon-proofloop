@@ -13,10 +13,14 @@ import {
 import type { ChatMessage } from "@/components/studio-ui";
 
 function createWelcomeMessage(bot: TextbookBot): ChatMessage {
+  const hasClassInfo = bot.publisher && bot.textbookName;
+  const text = hasClassInfo
+    ? `${bot.grade} ${bot.subject} · ${bot.publisher} ${bot.textbookName} 봇입니다.\n교과서 범위 안에서만 답하고, 관련 단원과 쪽수를 함께 보여 줍니다.`
+    : "사이드바에서 반에 참여하면 해당 교과서에 맞는 챗봇이 활성화됩니다.";
   return {
     id: `welcome-${bot.id}`,
     role: "assistant",
-    text: `${bot.grade} ${bot.subject} · ${bot.publisher} ${bot.textbookName} 봇입니다.\n교과서 범위 안에서만 답하고, 관련 단원과 쪽수를 함께 보여 줍니다.`,
+    text,
   };
 }
 
@@ -52,6 +56,7 @@ interface StudioState {
   activeClassId: string | null;
   activeClassSubject: string | null;
   setActiveClass: (id: string | null, subject: string | null) => void;
+  switchBotForClass: (cls: { id: string; subject: string; grade: string; publisher: string; textbookName: string }) => void;
 
   /* chat */
   chatInput: string;
@@ -114,6 +119,28 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   function setActiveClass(id: string | null, subject: string | null) {
     setActiveClassId(id);
     setActiveClassSubject(subject);
+  }
+
+  function switchBotForClass(cls: { id: string; subject: string; grade: string; publisher: string; textbookName: string }) {
+    const dynBot: TextbookBot = {
+      id: `class-${cls.id}`,
+      schoolLevel: cls.grade.includes("중") ? "중등" : "고등",
+      grade: cls.grade,
+      subject: cls.subject,
+      publisher: cls.publisher,
+      textbookName: cls.textbookName,
+      description: `${cls.grade} ${cls.subject} · ${cls.publisher} ${cls.textbookName}`,
+      distributionLabel: "반 교과서",
+      activeStudents: 0,
+      starterPrompts: [
+        `${cls.subject}에서 이해가 안 되는 부분을 물어보세요.`,
+        `이 단원에서 자주 틀리는 부분이 뭐야?`,
+      ],
+      sections: [],
+    };
+    setActiveClassId(cls.id);
+    setActiveClassSubject(cls.subject);
+    handleBotChange(dynBot);
   }
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([createWelcomeMessage(initialBot)]);
@@ -276,7 +303,7 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   return (
     <StudioContext.Provider
       value={{
-        allBots, currentBot, handleBotChange, addCustomBot, activeClassId, activeClassSubject, setActiveClass,
+        allBots, currentBot, handleBotChange, addCustomBot, activeClassId, activeClassSubject, setActiveClass, switchBotForClass,
         chatInput, setChatInput, chatMessages, chatLoading, handleSendQuestion,
         questionBank, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses,
         teacherMode, setTeacherMode,

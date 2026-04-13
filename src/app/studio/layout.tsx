@@ -27,17 +27,20 @@ function JoinClassWidget() {
   const [code, setCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
-  const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string }>>([]);
-  const { setActiveClass } = useStudio();
+  const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string; grade: string; publisher: string; textbookName: string }>>([]);
+  const { switchBotForClass } = useStudio();
 
   useEffect(() => {
     fetch("/api/classes").then((r) => r.json()).then((d) => {
-      const cls = d.classes?.map((c: any) => ({ id: c.id, name: c.name, subject: c.subject ?? "" })) ?? [];
+      const cls = d.classes?.map((c: any) => ({
+        id: c.id, name: c.name, subject: c.subject ?? "",
+        grade: c.grade ?? "", publisher: c.publisher ?? "", textbookName: c.textbook_name ?? "",
+      })) ?? [];
       setJoinedClasses(cls);
       // Auto-select first class
-      if (cls.length > 0) setActiveClass(cls[0].id, cls[0].subject);
+      if (cls.length > 0) switchBotForClass(cls[0]);
     }).catch(() => {});
-  }, [setActiveClass]);
+  }, [switchBotForClass]);
 
   async function handleJoin() {
     if (!code.trim()) return;
@@ -54,9 +57,12 @@ function JoinClassWidget() {
         setMessage({ type: "error", text: data.error });
       } else {
         setMessage({ type: "ok", text: `"${data.class.name}" 반에 참여했습니다!` });
-        const newClass = { id: data.class.id, name: data.class.name, subject: data.class.subject ?? "" };
+        const newClass = {
+          id: data.class.id, name: data.class.name, subject: data.class.subject ?? "",
+          grade: data.class.grade ?? "", publisher: data.class.publisher ?? "", textbookName: data.class.textbook_name ?? "",
+        };
         setJoinedClasses((c) => [...c, newClass]);
-        setActiveClass(data.class.id, newClass.subject);
+        switchBotForClass(newClass);
         setCode("");
       }
     } catch {
@@ -118,7 +124,7 @@ function JoinClassWidget() {
                       key={c.id}
                       type="button"
                       className="w-full rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-left text-xs text-white/82 transition-colors hover:bg-white/8"
-                      onClick={() => setActiveClass(c.id, c.subject)}
+                      onClick={() => switchBotForClass(c)}
                     >
                       {c.name}
                     </button>
