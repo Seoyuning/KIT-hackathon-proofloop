@@ -49,6 +49,14 @@ export default function ClassesPage() {
   const [formBookName, setFormBookName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  function handleCopyCode(code: string) {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    });
+  }
 
   useEffect(() => {
     if (isLoading) return;
@@ -232,7 +240,14 @@ export default function ClassesPage() {
                     </div>
                     <div className="mt-3 flex items-center gap-2">
                       <span className="text-xs text-muted">초대 코드:</span>
-                      <code className="rounded-lg bg-surface-strong px-3 py-1 text-sm font-bold tracking-widest text-navy">{cls.invite_code}</code>
+                      <button
+                        type="button"
+                        className="rounded-lg bg-surface-strong px-3 py-1 text-sm font-bold tracking-widest text-navy transition-colors hover:bg-teal/10 active:bg-teal/20"
+                        onClick={(e) => { e.stopPropagation(); handleCopyCode(cls.invite_code); }}
+                        title="클릭하면 복사됩니다"
+                      >
+                        {copiedCode === cls.invite_code ? "복사됨!" : cls.invite_code}
+                      </button>
                     </div>
                   </button>
                 );

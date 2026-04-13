@@ -175,8 +175,8 @@ export default function MyPage() {
         </dl>
       </section>
 
-      {/* Subject selection */}
-      <SubjectSection user={user} updateSubject={updateSubject} />
+      {/* Subject selection — teacher only */}
+      {user.role === "teacher" && <SubjectSection user={user} updateSubject={updateSubject} />}
 
       {/* Profile edit */}
       <section className="app-panel rounded-[28px] p-6">
