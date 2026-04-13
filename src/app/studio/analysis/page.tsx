@@ -314,9 +314,11 @@ export default function TeacherAnalysisPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[22px] border border-orange/20 bg-orange/5 p-5 text-center">
-                  <p className="text-sm font-semibold text-navy">이 교과서는 아직 단원 데이터가 탑재되지 않았습니다</p>
-                  <p className="mt-2 text-sm text-muted">향후 출판사 API 연동 또는 교육부 디지털교과서 플랫폼 연계로 자동 업데이트 예정입니다. 현재는 + 자료 추가 버튼으로 직접 학습 자료를 올릴 수 있습니다.</p>
+                <div className="rounded-[22px] border border-navy/10 bg-white p-6 text-center">
+                  <p className="text-2xl">📚</p>
+                  <p className="mt-3 text-base font-semibold text-navy">교과서 학습 콘텐츠 준비 중</p>
+                  <p className="mt-2 text-sm leading-6 text-muted">출판사 공식 API 및 교육부 디지털교과서 플랫폼과의 연동을 준비하고 있습니다. 곧 이 교과서의 단원별 학습 콘텐츠가 자동으로 채워집니다.</p>
+                  <p className="mt-4 text-xs text-muted/60">지금은 상단의 "+ 자료 추가"로 직접 학습 자료를 올릴 수 있습니다.</p>
                 </div>
               )}
             </div>
