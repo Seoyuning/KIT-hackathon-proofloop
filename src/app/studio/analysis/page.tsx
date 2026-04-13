@@ -1,10 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useStudio } from "@/lib/studio-context";
 import { InfoBlock, SectionHeader } from "@/components/studio-ui";
+
+interface UploadedMaterial {
+  id: string;
+  name: string;
+  type: "image" | "file";
+  url: string;
+  addedAt: string;
+}
 
 type AnalysisTab = "class" | "student";
 
@@ -28,6 +36,23 @@ export default function TeacherAnalysisPage() {
   const { currentBot, currentClusters, currentQuestionVolume, topClusters, currentStudentWeaknesses } = useStudio();
   const [tab, setTab] = useState<AnalysisTab>("class");
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [materials, setMaterials] = useState<UploadedMaterial[]>([]);
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileSelected(files: FileList | null) {
+    if (!files) return;
+    const newMaterials: UploadedMaterial[] = Array.from(files).map((f) => ({
+      id: `mat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: f.name,
+      type: f.type.startsWith("image/") ? "image" : "file",
+      url: URL.createObjectURL(f),
+      addedAt: new Date().toLocaleString("ko-KR"),
+    }));
+    setMaterials((prev) => [...newMaterials, ...prev]);
+    setShowUploadMenu(false);
+  }
 
   useEffect(() => {
     fetch("/api/dashboard").then((r) => r.json()).then((d) => {
@@ -188,14 +213,75 @@ export default function TeacherAnalysisPage() {
                 title={`${currentBot.publisher} ${currentBot.textbookName}`}
                 copy="학생 답변의 근거가 되는 교과서 단원과 내용입니다."
               />
-              <button
-                type="button"
-                className="whitespace-nowrap rounded-full bg-navy px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
-                onClick={() => router.push("/studio/generate")}
-              >
-                + 학습 자료 생성
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="whitespace-nowrap rounded-full bg-navy px-5 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-teal"
+                  onClick={() => setShowUploadMenu(!showUploadMenu)}
+                >
+                  + 자료 추가
+                </button>
+                {showUploadMenu && (
+                  <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-[18px] border border-line bg-white p-2 shadow-xl">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-navy transition-colors hover:bg-surface-strong"
+                      onClick={() => cameraInputRef.current?.click()}
+                    >
+                      <span className="text-base">📷</span> 사진 촬영
+                    </button>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-navy transition-colors hover:bg-surface-strong"
+                      onClick={() => { fileInputRef.current?.setAttribute("accept", "image/*"); fileInputRef.current?.click(); }}
+                    >
+                      <span className="text-base">🖼️</span> 사진 선택
+                    </button>
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-navy transition-colors hover:bg-surface-strong"
+                      onClick={() => { fileInputRef.current?.setAttribute("accept", ".pdf,.doc,.docx,.txt,.hwp"); fileInputRef.current?.click(); }}
+                    >
+                      <span className="text-base">📄</span> 파일 올리기
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-xs text-muted transition-colors hover:bg-surface-strong"
+                      onClick={() => setShowUploadMenu(false)}
+                    >
+                      닫기
+                    </button>
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" className="hidden" multiple onChange={(e) => handleFileSelected(e.target.files)} />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleFileSelected(e.target.files)} />
+              </div>
             </div>
+
+            {/* 추가된 자료 목록 */}
+            {materials.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-semibold text-muted">추가된 학습 자료</p>
+                {materials.map((mat) => (
+                  <div key={mat.id} className="flex items-center justify-between rounded-[16px] border border-line bg-surface-strong p-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base">{mat.type === "image" ? "🖼️" : "📄"}</span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-navy">{mat.name}</p>
+                        <p className="text-xs text-muted">{mat.addedAt}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="ml-2 whitespace-nowrap rounded-full border border-line px-2.5 py-1 text-xs text-muted transition-colors hover:border-red-300 hover:text-red-500"
+                      onClick={() => setMaterials((prev) => prev.filter((m) => m.id !== mat.id))}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="app-scroll mt-6 max-h-[600px] space-y-3 overflow-y-auto pr-1">
               {currentBot.sections.map((section) => (
