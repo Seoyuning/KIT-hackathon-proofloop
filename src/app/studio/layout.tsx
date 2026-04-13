@@ -28,7 +28,7 @@ function JoinClassWidget() {
   const [joining, setJoining] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [joinedClasses, setJoinedClasses] = useState<Array<{ id: string; name: string; subject: string; grade: string; publisher: string; textbookName: string }>>([]);
-  const { switchBotForClass } = useStudio();
+  const { switchBotForClass, activeClassId } = useStudio();
   const didInit = useRef(false);
 
   useEffect(() => {
@@ -113,27 +113,24 @@ function JoinClassWidget() {
         )}
       </div>
 
-      {/* Joined classes grouped by subject */}
+      {/* Joined classes — subject buttons */}
       {joinedClasses.length > 0 ? (
         <div className="mt-3 rounded-[22px] border border-white/10 bg-white/6 p-4">
           <p className="text-sm font-semibold">내 반</p>
-          <div className="mt-3 space-y-3">
-            {Object.entries(grouped).map(([subject, classes]) => (
-              <div key={subject}>
-                <p className="text-xs font-bold text-teal">{subject}</p>
-                <div className="mt-1.5 space-y-1">
-                  {classes.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className="w-full rounded-[14px] border border-white/8 bg-black/10 px-3 py-2 text-left text-xs text-white/82 transition-colors hover:bg-white/8"
-                      onClick={() => switchBotForClass(c)}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {joinedClasses.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition-all ${
+                  activeClassId === c.id
+                    ? "bg-teal text-white shadow-lg"
+                    : "border border-white/10 bg-white/6 text-white/72 hover:bg-white/12"
+                }`}
+                onClick={() => switchBotForClass(c)}
+              >
+                {c.subject} · {c.name}
+              </button>
             ))}
           </div>
         </div>
