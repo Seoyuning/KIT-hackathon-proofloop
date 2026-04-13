@@ -298,7 +298,7 @@ export default function TeacherAnalysisPage() {
             )}
 
             <div className="app-scroll mt-6 max-h-[600px] space-y-3 overflow-y-auto pr-1">
-              {currentBot.sections.map((section) => (
+              {currentBot.sections.length > 0 ? currentBot.sections.map((section) => (
                 <div key={section.id} className="rounded-[22px] border border-line bg-white/72 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -313,7 +313,12 @@ export default function TeacherAnalysisPage() {
                     <InfoBlock label="교사용 연결 포인트" value={section.teacherBridge} />
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="rounded-[22px] border border-orange/20 bg-orange/5 p-5 text-center">
+                  <p className="text-sm font-semibold text-navy">이 교과서는 아직 단원 데이터가 탑재되지 않았습니다</p>
+                  <p className="mt-2 text-sm text-muted">향후 출판사 API 연동 또는 교육부 디지털교과서 플랫폼 연계로 자동 업데이트 예정입니다. 현재는 + 자료 추가 버튼으로 직접 학습 자료를 올릴 수 있습니다.</p>
+                </div>
+              )}
             </div>
           </section>
         </div>

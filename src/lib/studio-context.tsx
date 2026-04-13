@@ -136,6 +136,13 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }
 
   function switchBotForClass(cls: { id: string; subject: string; grade: string; publisher: string; textbookName: string }) {
+    // Try to find matching seed bot with section data
+    const matchedSeed = textbookBots.find(
+      (b) => b.subject === cls.subject && b.publisher === cls.publisher && b.grade === cls.grade
+    ) ?? textbookBots.find(
+      (b) => b.subject === cls.subject && b.grade === cls.grade
+    );
+
     const dynBot: TextbookBot = {
       id: `class-${cls.id}`,
       schoolLevel: cls.grade.includes("중") ? "중등" : "고등",
@@ -146,11 +153,11 @@ export function StudioProvider({ children }: { children: ReactNode }) {
       description: `${cls.grade} ${cls.subject} · ${cls.publisher} ${cls.textbookName}`,
       distributionLabel: "반 교과서",
       activeStudents: 0,
-      starterPrompts: [
+      starterPrompts: matchedSeed?.starterPrompts ?? [
         `${cls.subject}에서 이해가 안 되는 부분을 물어보세요.`,
         `이 단원에서 자주 틀리는 부분이 뭐야?`,
       ],
-      sections: [],
+      sections: matchedSeed?.sections ?? [],
     };
     setActiveClassId(cls.id);
     setActiveClassSubject(cls.subject);
