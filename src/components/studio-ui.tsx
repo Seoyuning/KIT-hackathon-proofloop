@@ -55,11 +55,27 @@ export function AsideCard({ title, copy }: { title: string; copy: string }) {
   );
 }
 
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\$\\?[a-zA-Z]+\{[^}]*\}\$/g, (m) => {
+      return m.replace(/\$/g, "").replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "$1/$2").replace(/\\[a-zA-Z]+/g, "");
+    })
+    .replace(/\$([^$]+)\$/g, "$1")
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "$1/$2")
+    .replace(/\\(cos|sin|tan|log|ln|sqrt|theta|alpha|beta|pi)\b/g, "$1")
+    .replace(/\\\\/g, "");
+}
+
 export function MessageBubble({ message }: { message: ChatMessage }) {
+  const displayText = message.role === "assistant" ? cleanMarkdown(message.text) : message.text;
+
   return (
     <div
       className={`rounded-[26px] border p-4 ${
-        message.role === "assistant" ? "border-line bg-white/72" : "border-navy/12 bg-navy text-white"
+        message.role === "assistant" ? "border-line bg-white" : "border-navy/12 bg-navy text-white"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
@@ -78,11 +94,11 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       </div>
 
       <p
-        className={`mt-3 whitespace-pre-wrap text-sm leading-7 ${
-          message.role === "assistant" ? "text-muted" : "text-white/86"
+        className={`mt-3 whitespace-pre-wrap leading-8 ${
+          message.role === "assistant" ? "text-[15px] text-foreground" : "text-sm text-white/86"
         }`}
       >
-        {message.text}
+        {displayText}
       </p>
 
       {message.evidence && message.evidence.length > 0 ? (
